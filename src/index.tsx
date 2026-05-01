@@ -1,9 +1,12 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-
-type Point = {
-  x: number;
-  y: number;
-};
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { angleBetween, distanceBetween, type Point } from "./math";
 
 export type CustomBrush = {
   image: string;
@@ -35,14 +38,16 @@ export type ScratchCardRef = {
   reset: () => void;
 };
 
-type MouseOrTouchEvent = React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>;
+type MouseOrTouchEvent =
+  | React.MouseEvent<HTMLCanvasElement>
+  | React.TouchEvent<HTMLCanvasElement>;
 
 const getCoords = (e: MouseOrTouchEvent, canvas: HTMLCanvasElement): Point => {
   const { top, left } = canvas.getBoundingClientRect();
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-  if ('touches' in e) {
+  if ("touches" in e) {
     return {
       x: e.touches[0].clientX - left - scrollLeft,
       y: e.touches[0].clientY - top - scrollTop,
@@ -55,21 +60,11 @@ const getCoords = (e: MouseOrTouchEvent, canvas: HTMLCanvasElement): Point => {
   };
 };
 
-const distanceBetween = (p1: Point | null, p2: Point | null): number => {
-  if (p1 && p2) {
-    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  }
-  return 0;
-};
 
-const angleBetween = (p1: Point | null, p2: Point | null): number => {
-  if (p1 && p2) {
-    return Math.atan2(p2.x - p1.x, p2.y - p1.y);
-  }
-  return 0;
-};
-
-const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props, ref) {
+const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
+  props,
+  ref
+) {
   const {
     width,
     height,
@@ -97,10 +92,10 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    ctxRef.current = canvas.getContext('2d');
+    ctxRef.current = canvas.getContext("2d");
 
     const img = new Image();
-    img.crossOrigin = 'Anonymous';
+    img.crossOrigin = "Anonymous";
     img.onload = () => {
       ctxRef.current?.drawImage(img, 0, 0, width, height);
       setLoaded(true);
@@ -113,7 +108,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
       brush.src = customBrush.image;
       brushImageRef.current = brush;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const reset = useCallback(() => {
@@ -122,8 +117,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
     const img = imageRef.current;
     if (!canvas || !ctx || !img) return;
 
-    canvas.style.opacity = '1';
-    ctx.globalCompositeOperation = 'source-over';
+    canvas.style.opacity = "1";
+    ctx.globalCompositeOperation = "source-over";
     ctx.drawImage(img, 0, 0, width, height);
     isFinished.current = false;
   }, [width, height]);
@@ -159,8 +154,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
     if (filledInPixels > finishPercent) {
       const canvas = canvasRef.current;
       if (canvas && fadeOutOnComplete) {
-        canvas.style.transition = '1s';
-        canvas.style.opacity = '0';
+        canvas.style.transition = "1s";
+        canvas.style.opacity = "0";
       }
       onComplete?.();
       isFinished.current = true;
@@ -188,13 +183,23 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
     const angle = angleBetween(lastPoint.current, currentPoint);
 
     for (let i = 0; i < distance; i++) {
-      const x = lastPoint.current ? lastPoint.current.x + Math.sin(angle) * i : 0;
-      const y = lastPoint.current ? lastPoint.current.y + Math.cos(angle) * i : 0;
+      const x = lastPoint.current
+        ? lastPoint.current.x + Math.sin(angle) * i
+        : 0;
+      const y = lastPoint.current
+        ? lastPoint.current.y + Math.cos(angle) * i
+        : 0;
 
-      ctx.globalCompositeOperation = 'destination-out';
+      ctx.globalCompositeOperation = "destination-out";
 
       if (brushImageRef.current && customBrush) {
-        ctx.drawImage(brushImageRef.current, x, y, customBrush.width, customBrush.height);
+        ctx.drawImage(
+          brushImageRef.current,
+          x,
+          y,
+          customBrush.width,
+          customBrush.height
+        );
       } else {
         ctx.beginPath();
         ctx.arc(x, y, brushSize, 0, 2 * Math.PI, false);
@@ -213,28 +218,28 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
   const containerStyle: React.CSSProperties = {
     width: `${width}px`,
     height: `${height}px`,
-    position: 'relative',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
+    position: "relative",
+    userSelect: "none",
+    WebkitUserSelect: "none",
   };
 
   const canvasStyle: React.CSSProperties = {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     zIndex: 1,
   };
 
   const resultStyle: React.CSSProperties = {
-    visibility: loaded ? 'visible' : 'hidden',
-    width: '100%',
-    height: '100%',
+    visibility: loaded ? "visible" : "hidden",
+    width: "100%",
+    height: "100%",
   };
 
   return (
-    <div className='ScratchCard__Container' style={containerStyle}>
+    <div className="ScratchCard__Container" style={containerStyle}>
       <canvas
         ref={canvasRef}
-        className='ScratchCard__Canvas'
+        className="ScratchCard__Canvas"
         style={canvasStyle}
         width={width}
         height={height}
@@ -245,7 +250,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
       />
-      <div className='ScratchCard__Result' style={resultStyle}>
+      <div className="ScratchCard__Result" style={resultStyle}>
         {children}
       </div>
     </div>
@@ -254,4 +259,4 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props
 
 export default ScratchCard;
 
-export { CUSTOM_BRUSH_PRESET } from './brushPresets';
+export { CUSTOM_BRUSH_PRESET } from "./brushPresets";
