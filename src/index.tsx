@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { getCoords, getFilledInPixels, type CustomCheckZone } from "./canvas";
 import { angleBetween, distanceBetween, type Point } from "./math";
 
 export type CustomBrush = {
@@ -14,12 +15,7 @@ export type CustomBrush = {
   height: number;
 };
 
-export type CustomCheckZone = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+export type { CustomCheckZone };
 
 export type Props = {
   width: number;
@@ -41,24 +37,6 @@ export type ScratchCardRef = {
 type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
-
-const getCoords = (e: MouseOrTouchEvent, canvas: HTMLCanvasElement): Point => {
-  const { top, left } = canvas.getBoundingClientRect();
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-  if ("touches" in e) {
-    return {
-      x: e.touches[0].clientX - left - scrollLeft,
-      y: e.touches[0].clientY - top - scrollTop,
-    };
-  }
-
-  return {
-    x: e.pageX - left - scrollLeft,
-    y: e.pageY - top - scrollTop,
-  };
-};
 
 
 const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
@@ -125,29 +103,6 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
   useImperativeHandle(ref, () => ({ reset }), [reset]);
 
-  const getFilledInPixels = (stride: number): number => {
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-    if (!ctx || !canvas) return 0;
-
-    const x = customCheckZone?.x ?? 0;
-    const y = customCheckZone?.y ?? 0;
-    const w = customCheckZone?.width ?? canvas.width;
-    const h = customCheckZone?.height ?? canvas.height;
-
-    const pixels = ctx.getImageData(x, y, w, h);
-    const total = pixels.data.length / stride;
-    let count = 0;
-
-    for (let i = 0; i < pixels.data.length; i += stride) {
-      if (pixels.data[i] === 0) {
-        count++;
-      }
-    }
-
-    return Math.round((count / total) * 100);
-  };
-
   const handlePercentage = (filledInPixels: number) => {
     if (isFinished.current) return;
 
@@ -208,7 +163,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     lastPoint.current = currentPoint;
-    handlePercentage(getFilledInPixels(32));
+    handlePercentage(getFilledInPixels(32, ctx, canvas, customCheckZone));
   };
 
   const handlePointerUp = () => {
