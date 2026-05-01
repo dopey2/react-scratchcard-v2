@@ -5,9 +5,9 @@ import {
   useImperativeHandle,
   useRef,
   useState,
-} from "react";
-import { getCoords, getFilledInPixels, type CustomCheckZone } from "./canvas";
-import { angleBetween, distanceBetween, type Point } from "./math";
+} from 'react';
+import { getCoords, getFilledInPixels, type CustomCheckZone } from '../canvas/canvas';
+import { angleBetween, distanceBetween, type Point } from '../math/math';
 
 export type CustomBrush = {
   image: string;
@@ -37,7 +37,6 @@ export type ScratchCardRef = {
 type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
-
 
 const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   props,
@@ -70,10 +69,10 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    ctxRef.current = canvas.getContext("2d");
+    ctxRef.current = canvas.getContext('2d');
 
     const img = new Image();
-    img.crossOrigin = "Anonymous";
+    img.crossOrigin = 'Anonymous';
     img.onload = () => {
       ctxRef.current?.drawImage(img, 0, 0, width, height);
       setLoaded(true);
@@ -95,8 +94,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const img = imageRef.current;
     if (!canvas || !ctx || !img) return;
 
-    canvas.style.opacity = "1";
-    ctx.globalCompositeOperation = "source-over";
+    canvas.style.opacity = '1';
+    ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(img, 0, 0, width, height);
     isFinished.current = false;
   }, [width, height]);
@@ -109,8 +108,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     if (filledInPixels > finishPercent) {
       const canvas = canvasRef.current;
       if (canvas && fadeOutOnComplete) {
-        canvas.style.transition = "1s";
-        canvas.style.opacity = "0";
+        canvas.style.transition = '1s';
+        canvas.style.opacity = '0';
       }
       onComplete?.();
       isFinished.current = true;
@@ -145,7 +144,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         ? lastPoint.current.y + Math.cos(angle) * i
         : 0;
 
-      ctx.globalCompositeOperation = "destination-out";
+      ctx.globalCompositeOperation = 'destination-out';
 
       if (brushImageRef.current && customBrush) {
         ctx.drawImage(
@@ -173,28 +172,28 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const containerStyle: React.CSSProperties = {
     width: `${width}px`,
     height: `${height}px`,
-    position: "relative",
-    userSelect: "none",
-    WebkitUserSelect: "none",
+    position: 'relative',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
   };
 
   const canvasStyle: React.CSSProperties = {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     zIndex: 1,
   };
 
   const resultStyle: React.CSSProperties = {
-    visibility: loaded ? "visible" : "hidden",
-    width: "100%",
-    height: "100%",
+    visibility: loaded ? 'visible' : 'hidden',
+    width: '100%',
+    height: '100%',
   };
 
   return (
-    <div className="ScratchCard__Container" style={containerStyle}>
+    <div className='ScratchCard__Container' style={containerStyle}>
       <canvas
         ref={canvasRef}
-        className="ScratchCard__Canvas"
+        className='ScratchCard__Canvas'
         style={canvasStyle}
         width={width}
         height={height}
@@ -205,7 +204,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
       />
-      <div className="ScratchCard__Result" style={resultStyle}>
+      <div className='ScratchCard__Result' style={resultStyle}>
         {children}
       </div>
     </div>
@@ -213,5 +212,3 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 });
 
 export default ScratchCard;
-
-export { CUSTOM_BRUSH_PRESET } from "./brushPresets";

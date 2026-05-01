@@ -1,4 +1,4 @@
-import type { Point } from './math';
+import type { Point } from '../math/math';
 
 type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>

@@ -10,7 +10,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'react-scratchcard-v2': path.resolve(__dirname, '../src/index.tsx')
+      'react-scratchcard-v2': path.resolve(__dirname, '../src/index.ts')
     }
   }
 });

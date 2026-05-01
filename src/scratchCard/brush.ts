@@ -1,4 +1,4 @@
-import { CustomBrush } from ".";
+import type { CustomBrush } from "./scratchCard";
 
 export const CUSTOM_BRUSH_PRESET: CustomBrush = {
   image:
