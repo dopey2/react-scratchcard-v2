@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render } from '@testing-library/react';
-import ScratchCard from './index';
+import { describe, it, expect, vi, beforeAll } from "vitest";
+import { render } from "@testing-library/react";
+import ScratchCard from "./index";
 
 beforeAll(() => {
   HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
@@ -9,29 +9,29 @@ beforeAll(() => {
     beginPath: vi.fn(),
     arc: vi.fn(),
     fill: vi.fn(),
-    globalCompositeOperation: ''
+    globalCompositeOperation: "",
   })) as never;
 });
 
-describe('ScratchCard', () => {
-  it('renders container and canvas', () => {
+describe("ScratchCard", () => {
+  it("renders container and canvas", () => {
     const { container } = render(
-      <ScratchCard width={300} height={200} image='test.jpg'>
+      <ScratchCard width={300} height={200} image="test.jpg">
         <div>Prize</div>
       </ScratchCard>
     );
     expect(
-      container.querySelector('.ScratchCard__Container')
+      container.querySelector(".ScratchCard__Container")
     ).toBeInTheDocument();
-    expect(container.querySelector('.ScratchCard__Canvas')).toBeInTheDocument();
+    expect(container.querySelector(".ScratchCard__Canvas")).toBeInTheDocument();
   });
 
-  it('renders children', () => {
+  it("renders children", () => {
     const { getByText } = render(
-      <ScratchCard width={300} height={200} image='test.jpg'>
+      <ScratchCard width={300} height={200} image="test.jpg">
         <div>You Win!</div>
       </ScratchCard>
     );
-    expect(getByText('You Win!')).toBeInTheDocument();
+    expect(getByText("You Win!")).toBeInTheDocument();
   });
 });

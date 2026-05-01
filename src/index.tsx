@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type Point = {
   x: number;
@@ -6,276 +6,252 @@ type Point = {
 };
 
 export type CustomBrush = {
-  image: any;
+  image: string;
   width: number;
   height: number;
 };
 
-type CustomCheckZone = {
+export type CustomCheckZone = {
   x: number;
   y: number;
   width: number;
   height: number;
 };
 
-interface Props {
+export type Props = {
   width: number;
   height: number;
-  image: any;
+  image: string;
   finishPercent?: number;
   onComplete?: () => void;
   brushSize?: number;
   fadeOutOnComplete?: boolean;
-  children?: any;
+  children?: React.ReactNode;
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
-}
+};
 
-interface State {
-  loaded: boolean;
-  finished: boolean;
-}
+export type ScratchCardRef = {
+  reset: () => void;
+};
 
-class Scratch extends Component<Props, State> {
-  isDrawing = false;
+type MouseOrTouchEvent = React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>;
 
-  lastPoint: Point | null = null;
+const getCoords = (e: MouseOrTouchEvent, canvas: HTMLCanvasElement): Point => {
+  const { top, left } = canvas.getBoundingClientRect();
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-  ctx: CanvasRenderingContext2D;
-
-  canvas!: HTMLCanvasElement;
-
-  brushImage?: any;
-
-  image: HTMLImageElement;
-
-  isFinished: boolean = false;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = { loaded: false, finished: false };
-  }
-
-  componentDidMount() {
-    this.isDrawing = false;
-    this.lastPoint = null;
-    this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-
-    this.image = new Image();
-    this.image.crossOrigin = "Anonymous";
-    this.image.onload = () => {
-      this.ctx.drawImage(this.image, 0, 0, this.props.width, this.props.height);
-      this.setState({ loaded: true });
+  if ('touches' in e) {
+    return {
+      x: e.touches[0].clientX - left - scrollLeft,
+      y: e.touches[0].clientY - top - scrollTop,
     };
-
-    this.image.src = this.props.image;
-
-    if (this.props.customBrush) {
-      this.brushImage = new Image(
-        this.props.customBrush.width,
-        this.props.customBrush.height
-      );
-      this.brushImage.src = this.props.customBrush.image;
-    }
   }
 
-  reset = () => {
-    this.canvas.style.opacity = "1";
-    this.ctx.globalCompositeOperation = "source-over";
-    this.ctx.drawImage(this.image, 0, 0, this.props.width, this.props.height);
-    this.isFinished = false;
+  return {
+    x: e.pageX - left - scrollLeft,
+    y: e.pageY - top - scrollTop,
   };
+};
 
-  getFilledInPixels(stride: number) {
-    if (!stride || stride < 1) {
-      stride = 1;
+const distanceBetween = (p1: Point | null, p2: Point | null): number => {
+  if (p1 && p2) {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  }
+  return 0;
+};
+
+const angleBetween = (p1: Point | null, p2: Point | null): number => {
+  if (p1 && p2) {
+    return Math.atan2(p2.x - p1.x, p2.y - p1.y);
+  }
+  return 0;
+};
+
+const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(props, ref) {
+  const {
+    width,
+    height,
+    image,
+    finishPercent = 70,
+    onComplete,
+    brushSize = 20,
+    fadeOutOnComplete = true,
+    children,
+    customBrush,
+    customCheckZone,
+  } = props;
+
+  const [loaded, setLoaded] = useState(false);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const brushImageRef = useRef<HTMLImageElement | null>(null);
+  const isDrawing = useRef(false);
+  const lastPoint = useRef<Point | null>(null);
+  const isFinished = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    ctxRef.current = canvas.getContext('2d');
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      ctxRef.current?.drawImage(img, 0, 0, width, height);
+      setLoaded(true);
+    };
+    img.src = image;
+    imageRef.current = img;
+
+    if (customBrush) {
+      const brush = new Image(customBrush.width, customBrush.height);
+      brush.src = customBrush.image;
+      brushImageRef.current = brush;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    let x = 0;
-    let y = 0;
-    let width = this.canvas.width;
-    let height = this.canvas.height;
+  const reset = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    const img = imageRef.current;
+    if (!canvas || !ctx || !img) return;
 
-    if (this.props.customCheckZone) {
-      x = this.props.customCheckZone.x;
-      y = this.props.customCheckZone.y;
-      width = this.props.customCheckZone.width;
-      height = this.props.customCheckZone.height;
-    }
+    canvas.style.opacity = '1';
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(img, 0, 0, width, height);
+    isFinished.current = false;
+  }, [width, height]);
 
-    const pixels = this.ctx.getImageData(x, y, width, height);
+  useImperativeHandle(ref, () => ({ reset }), [reset]);
 
+  const getFilledInPixels = (stride: number): number => {
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+    if (!ctx || !canvas) return 0;
+
+    const x = customCheckZone?.x ?? 0;
+    const y = customCheckZone?.y ?? 0;
+    const w = customCheckZone?.width ?? canvas.width;
+    const h = customCheckZone?.height ?? canvas.height;
+
+    const pixels = ctx.getImageData(x, y, w, h);
     const total = pixels.data.length / stride;
     let count = 0;
 
     for (let i = 0; i < pixels.data.length; i += stride) {
-      // @ts-expect-error -- pixel data comparison, i will fix this later
-      if (parseInt(pixels.data[i], 10) === 0) {
+      if (pixels.data[i] === 0) {
         count++;
       }
     }
 
     return Math.round((count / total) * 100);
-  }
-
-  getMouse(e: any, canvas: HTMLCanvasElement) {
-    const { top, left } = canvas.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft =
-      window.pageXOffset || document.documentElement.scrollLeft;
-
-    let x = 0;
-    let y = 0;
-
-    if (e && e.pageX && e.pageY) {
-      x = e.pageX - left - scrollLeft;
-      y = e.pageY - top - scrollTop;
-    } else if (e && e.touches) {
-      x = e.touches[0].clientX - left - scrollLeft;
-      y = e.touches[0].clientY - top - scrollTop;
-    }
-
-    return { x, y };
-  }
-
-  distanceBetween(point1: Point | null, point2: Point | null) {
-    if (point1 && point2) {
-      return Math.sqrt(
-        Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
-      );
-    }
-
-    return 0;
-  }
-
-  angleBetween(point1: Point | null, point2: Point | null) {
-    if (point1 && point2) {
-      return Math.atan2(point2.x - point1.x, point2.y - point1.y);
-    }
-    return 0;
-  }
-
-  handlePercentage(filledInPixels = 0) {
-    if (this.isFinished) {
-      return;
-    }
-
-    let finishPercent = 70;
-    if (this.props.finishPercent !== undefined) {
-      finishPercent = this.props.finishPercent;
-    }
-
-    if (filledInPixels > finishPercent) {
-      if (this.props.fadeOutOnComplete !== false) {
-        this.canvas.style.transition = "1s";
-        this.canvas.style.opacity = "0";
-      }
-
-      this.setState({ finished: true });
-      if (this.props.onComplete) {
-        this.props.onComplete();
-      }
-
-      this.isFinished = true;
-    }
-  }
-
-  handleMouseDown = (e: any) => {
-    this.isDrawing = true;
-    this.lastPoint = this.getMouse(e, this.canvas);
   };
 
-  handleMouseMove = (e: any) => {
-    if (!this.isDrawing) {
-      return;
+  const handlePercentage = (filledInPixels: number) => {
+    if (isFinished.current) return;
+
+    if (filledInPixels > finishPercent) {
+      const canvas = canvasRef.current;
+      if (canvas && fadeOutOnComplete) {
+        canvas.style.transition = '1s';
+        canvas.style.opacity = '0';
+      }
+      onComplete?.();
+      isFinished.current = true;
     }
+  };
+
+  const handlePointerDown = (e: MouseOrTouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    isDrawing.current = true;
+    lastPoint.current = getCoords(e, canvas);
+  };
+
+  const handlePointerMove = (e: MouseOrTouchEvent) => {
+    if (!isDrawing.current) return;
 
     e.preventDefault();
 
-    const currentPoint = this.getMouse(e, this.canvas);
-    const distance = this.distanceBetween(this.lastPoint, currentPoint);
-    const angle = this.angleBetween(this.lastPoint, currentPoint);
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
 
-    let x, y;
+    const currentPoint = getCoords(e, canvas);
+    const distance = distanceBetween(lastPoint.current, currentPoint);
+    const angle = angleBetween(lastPoint.current, currentPoint);
 
     for (let i = 0; i < distance; i++) {
-      x = this.lastPoint ? this.lastPoint.x + Math.sin(angle) * i : 0;
-      y = this.lastPoint ? this.lastPoint.y + Math.cos(angle) * i : 0;
-      this.ctx.globalCompositeOperation = "destination-out";
+      const x = lastPoint.current ? lastPoint.current.x + Math.sin(angle) * i : 0;
+      const y = lastPoint.current ? lastPoint.current.y + Math.cos(angle) * i : 0;
 
-      if (this.brushImage && this.props.customBrush) {
-        this.ctx.drawImage(
-          this.brushImage,
-          x,
-          y,
-          this.props.customBrush.width,
-          this.props.customBrush.height
-        );
+      ctx.globalCompositeOperation = 'destination-out';
+
+      if (brushImageRef.current && customBrush) {
+        ctx.drawImage(brushImageRef.current, x, y, customBrush.width, customBrush.height);
       } else {
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, this.props.brushSize || 20, 0, 2 * Math.PI, false);
-        this.ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, brushSize, 0, 2 * Math.PI, false);
+        ctx.fill();
       }
     }
 
-    this.lastPoint = currentPoint;
-    this.handlePercentage(this.getFilledInPixels(32));
+    lastPoint.current = currentPoint;
+    handlePercentage(getFilledInPixels(32));
   };
 
-  handleMouseUp = () => {
-    this.isDrawing = false;
+  const handlePointerUp = () => {
+    isDrawing.current = false;
   };
 
-  render() {
-    const containerStyle = {
-      width: this.props.width + "px",
-      height: this.props.height + "px",
-      position: "relative" as const,
-      WebkitUserSelect: "none" as const,
-      MozUserSelect: "none" as const,
-      msUserSelect: "none" as const,
-      userSelect: "none" as const,
-    };
+  const containerStyle: React.CSSProperties = {
+    width: `${width}px`,
+    height: `${height}px`,
+    position: 'relative',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  };
 
-    const canvasStyle = {
-      position: "absolute" as const,
-      top: 0,
-      zIndex: 1,
-    };
+  const canvasStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
+  };
 
-    const resultStyle = {
-      visibility: this.state.loaded
-        ? ("visible" as const)
-        : ("hidden" as const),
-      width: "100%",
-      height: "100%",
-    };
+  const resultStyle: React.CSSProperties = {
+    visibility: loaded ? 'visible' : 'hidden',
+    width: '100%',
+    height: '100%',
+  };
 
-    return (
-      <div className="ScratchCard__Container" style={containerStyle}>
-        <canvas
-          ref={(ref: any) => {
-            this.canvas = ref;
-          }}
-          className="ScratchCard__Canvas"
-          style={canvasStyle}
-          width={this.props.width}
-          height={this.props.height}
-          onMouseDown={this.handleMouseDown}
-          onTouchStart={this.handleMouseDown}
-          onMouseMove={this.handleMouseMove}
-          onTouchMove={this.handleMouseMove}
-          onMouseUp={this.handleMouseUp}
-          onTouchEnd={this.handleMouseUp}
-        />
-        <div className="ScratchCard__Result" style={resultStyle}>
-          {this.props.children}
-        </div>
+  return (
+    <div className='ScratchCard__Container' style={containerStyle}>
+      <canvas
+        ref={canvasRef}
+        className='ScratchCard__Canvas'
+        style={canvasStyle}
+        width={width}
+        height={height}
+        onMouseDown={(e) => handlePointerDown(e)}
+        onTouchStart={(e) => handlePointerDown(e)}
+        onMouseMove={(e) => handlePointerMove(e)}
+        onTouchMove={(e) => handlePointerMove(e)}
+        onMouseUp={handlePointerUp}
+        onTouchEnd={handlePointerUp}
+      />
+      <div className='ScratchCard__Result' style={resultStyle}>
+        {children}
       </div>
-    );
-  }
-}
+    </div>
+  );
+});
 
-export default Scratch;
+export default ScratchCard;
 
 export { CUSTOM_BRUSH_PRESET } from './brushPresets';
