@@ -1,30 +1,49 @@
-import { useRef } from 'react';
-import ScratchCard, { CUSTOM_BRUSH_PRESET } from 'react-scratchcard-v2';
-import img from './img.jpg';
+import { useState } from 'react';
+import BasicDemo from './pages/BasicDemo';
+import ScrollTest from './pages/ScrollTest';
+
+const PAGES = {
+  basic: 'Basic Demo',
+  scroll: 'Scroll Test',
+} as const;
+
+type Page = keyof typeof PAGES;
+
+const navStyle: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+  display: 'flex',
+  gap: '0.5rem',
+  padding: '0.75rem 1rem',
+  background: '#1a1a1a',
+  borderBottom: '1px solid #333',
+};
+
+const btnStyle = (active: boolean): React.CSSProperties => ({
+  padding: '0.4rem 1rem',
+  borderRadius: 4,
+  border: 'none',
+  cursor: 'pointer',
+  fontWeight: active ? 700 : 400,
+  background: active ? '#fff' : '#333',
+  color: active ? '#1a1a1a' : '#aaa',
+});
 
 export default function App() {
-  const ref = useRef<InstanceType<typeof ScratchCard>>(null);
+  const [page, setPage] = useState<Page>('basic');
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ marginBottom: '1rem' }}>react-scratchcard-v2 demo</h1>
-      <button onClick={() => ref.current?.reset()} style={{ marginBottom: '1rem', display: 'block' }}>
-        Reset
-      </button>
-      <ScratchCard
-        ref={ref}
-        width={320}
-        height={226}
-        image={img}
-        finishPercent={80}
-        onComplete={() => console.log('complete')}
-        brushSize={30}
-        customBrush={CUSTOM_BRUSH_PRESET}
-      >
-        <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-          <h2>You win!</h2>
-        </div>
-      </ScratchCard>
+    <div>
+      <nav style={navStyle}>
+        {(Object.entries(PAGES) as [Page, string][]).map(([key, label]) => (
+          <button key={key} style={btnStyle(page === key)} onClick={() => setPage(key)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {page === 'basic' && <BasicDemo />}
+      {page === 'scroll' && <ScrollTest />}
     </div>
   );
 }
