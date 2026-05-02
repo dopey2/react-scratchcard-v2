@@ -27,7 +27,7 @@ export type Props = {
   onScratchEnd?: () => void;
   onScratch?: (percent: number) => void;
   brushSize?: number;
-  fadeOutOnComplete?: boolean;
+  lockOnComplete?: boolean;
   children?: React.ReactNode;
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
@@ -67,7 +67,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     onScratchEnd,
     onScratch,
     brushSize = 20,
-    fadeOutOnComplete = true,
+    lockOnComplete = true,
     children,
     customBrush,
     customCheckZone,
@@ -86,6 +86,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
   const isFinished = useRef(false);
+  const hasCompleted = useRef(false);
   const lastSampleTime = useRef(0);
   const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -142,20 +143,18 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       revealIntervalRef.current = null;
     }
 
-    canvas.style.opacity = '1';
-    canvas.style.transition = '';
     drawCover(ctx);
     isFinished.current = false;
+    hasCompleted.current = false;
   }, [drawCover]);
 
-  const finish = useCallback((canvas: HTMLCanvasElement) => {
-    if (fadeOutOnComplete) {
-      canvas.style.transition = '1s';
-      canvas.style.opacity = '0';
+  const finish = useCallback(() => {
+    if (!hasCompleted.current) {
+      hasCompleted.current = true;
+      onComplete?.();
     }
-    onComplete?.();
     isFinished.current = true;
-  }, [fadeOutOnComplete, onComplete]);
+  }, [onComplete]);
 
   const revealAll = useCallback((options?: RevealAllOptions) => {
     const canvas = canvasRef.current;
@@ -165,7 +164,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     if (!options?.duration) {
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillRect(0, 0, width, height);
-      finish(canvas);
+      finish();
       return;
     }
 
@@ -190,7 +189,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       if (offset >= opaque.length) {
         clearInterval(revealIntervalRef.current!);
         revealIntervalRef.current = null;
-        finish(canvas);
+        finish();
       }
     }, interval);
   }, [width, height, finish]);
@@ -198,28 +197,24 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   useImperativeHandle(ref, () => ({ reset, revealAll }), [reset, revealAll]);
 
   const handlePercentage = (filledInPixels: number) => {
-    if (isFinished.current) return;
+    if (hasCompleted.current) return;
 
     if (filledInPixels > finishPercent) {
-      const canvas = canvasRef.current;
-      if (canvas && fadeOutOnComplete) {
-        canvas.style.transition = '1s';
-        canvas.style.opacity = '0';
-      }
+      hasCompleted.current = true;
       onComplete?.();
-      isFinished.current = true;
+      if (lockOnComplete) isFinished.current = true;
     }
   };
 
   const handlePointerDown = (e: MouseOrTouchEvent) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || isFinished.current) return;
     isDrawing.current = true;
     lastPoint.current = getCoords(e, canvas);
   };
 
   const handlePointerMove = (e: MouseOrTouchEvent) => {
-    if (!isDrawing.current) return;
+    if (!isDrawing.current || isFinished.current) return;
 
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;

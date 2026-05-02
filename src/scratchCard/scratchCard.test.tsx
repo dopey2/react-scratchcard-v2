@@ -210,20 +210,6 @@ describe('ScratchCard', () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('fades canvas out on completion by default', () => {
-      const { container } = setup();
-      const canvas = container.querySelector('canvas') as HTMLElement;
-      scratch(canvas);
-      expect(canvas.style.opacity).toBe('0');
-    });
-
-    it('does not fade canvas when fadeOutOnComplete is false', () => {
-      const { container } = setup({ fadeOutOnComplete: false });
-      const canvas = container.querySelector('canvas') as HTMLElement;
-      scratch(canvas);
-      expect(canvas.style.opacity).not.toBe('0');
-    });
-
     it('passes customCheckZone bounds to getImageData', () => {
       const customCheckZone = { x: 10, y: 20, width: 50, height: 30 };
       const { container } = setup({ customCheckZone });
@@ -275,13 +261,6 @@ describe('ScratchCard', () => {
       setup({ ref, onComplete });
       act(() => { ref.current?.revealAll(); });
       expect(onComplete).toHaveBeenCalledTimes(1);
-    });
-
-    it('fades canvas out when fadeOutOnComplete is true', () => {
-      const ref = createRef<ScratchCardRef>();
-      const { container } = setup({ ref });
-      act(() => { ref.current?.revealAll(); });
-      expect((container.querySelector('canvas') as HTMLElement).style.opacity).toBe('0');
     });
 
     it('does not call onComplete a second time', () => {
@@ -379,18 +358,73 @@ describe('ScratchCard', () => {
     });
   });
 
-  describe('reset()', () => {
-    it('restores canvas opacity after completion', () => {
+  describe('lockOnComplete', () => {
+    beforeEach(() => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
-      const ref = createRef<ScratchCardRef>();
-      const { container } = setup({ ref });
-      const canvas = container.querySelector('canvas') as HTMLElement;
-      scratch(canvas);
-      expect(canvas.style.opacity).toBe('0');
-      act(() => { ref.current?.reset(); });
-      expect(canvas.style.opacity).toBe('1');
     });
 
+    describe('true (default)', () => {
+      it('blocks further scratching after threshold is reached', () => {
+        const { container } = setup();
+        const canvas = container.querySelector('canvas')!;
+        scratch(canvas);
+        const arcCallsAfterComplete = mockCtx.arc.mock.calls.length;
+        scratch(canvas);
+        expect(mockCtx.arc.mock.calls.length).toBe(arcCallsAfterComplete);
+      });
+
+      it('calls onComplete only once even when scratching continues', () => {
+        const onComplete = vi.fn();
+        const { container } = setup({ onComplete });
+        const canvas = container.querySelector('canvas')!;
+        scratch(canvas);
+        scratch(canvas);
+        expect(onComplete).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('false', () => {
+      it('allows scratching to continue after threshold is reached', () => {
+        const { container } = setup({ lockOnComplete: false });
+        const canvas = container.querySelector('canvas')!;
+        scratch(canvas);
+        const arcCallsAfterComplete = mockCtx.arc.mock.calls.length;
+        scratch(canvas);
+        expect(mockCtx.arc.mock.calls.length).toBeGreaterThan(arcCallsAfterComplete);
+      });
+
+      it('calls onComplete only once even when scratching continues', () => {
+        const onComplete = vi.fn();
+        const { container } = setup({ lockOnComplete: false, onComplete });
+        const canvas = container.querySelector('canvas')!;
+        scratch(canvas);
+        scratch(canvas);
+        expect(onComplete).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not call onComplete again when revealAll is called after threshold', () => {
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, lockOnComplete: false, onComplete });
+        scratch(document.querySelector('canvas')!);
+        act(() => { ref.current?.revealAll(); });
+        expect(onComplete).toHaveBeenCalledTimes(1);
+      });
+
+      it('allows onComplete to fire again after reset', () => {
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        const { container } = setup({ ref, lockOnComplete: false, onComplete });
+        const canvas = container.querySelector('canvas')!;
+        scratch(canvas);
+        act(() => { ref.current?.reset(); });
+        scratch(canvas);
+        expect(onComplete).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
+
+  describe('reset()', () => {
     it('allows onComplete to fire again after reset', () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
       const onComplete = vi.fn();
