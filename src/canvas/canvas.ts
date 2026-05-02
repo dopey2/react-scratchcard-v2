@@ -16,13 +16,13 @@ export const getCoords = (
   canvas: HTMLCanvasElement
 ): Point => {
   const { top, left } = canvas.getBoundingClientRect();
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+  const scrollTop = window.scrollY;
+  const scrollLeft = window.scrollX;
 
   if ('touches' in e) {
     return {
-      x: e.touches[0].clientX - left - scrollLeft,
-      y: e.touches[0].clientY - top - scrollTop,
+      x: e.touches[0].clientX - left,
+      y: e.touches[0].clientY - top,
     };
   }
 

@@ -36,11 +36,20 @@ describe('getCoords', () => {
     expect(getCoords(e, mockCanvas(100, 50))).toEqual({ x: 100, y: 100 });
   });
 
-  it('accounts for page scroll offset', () => {
+  it('accounts for page scroll offset for mouse events', () => {
     Object.defineProperty(window, 'scrollY', { value: 20, configurable: true });
     Object.defineProperty(window, 'scrollX', { value: 10, configurable: true });
     const e = { pageX: 50, pageY: 50 } as React.MouseEvent<HTMLCanvasElement>;
     expect(getCoords(e, mockCanvas(0, 0))).toEqual({ x: 40, y: 30 });
+  });
+
+  it('touch coordinates are not affected by page scroll', () => {
+    Object.defineProperty(window, 'scrollY', { value: 800, configurable: true });
+    Object.defineProperty(window, 'scrollX', { value: 0, configurable: true });
+    const e = {
+      touches: [{ clientX: 80, clientY: 60 }],
+    } as unknown as React.TouchEvent<HTMLCanvasElement>;
+    expect(getCoords(e, mockCanvas(10, 20))).toEqual({ x: 60, y: 50 });
   });
 });
 

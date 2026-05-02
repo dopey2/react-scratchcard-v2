@@ -85,6 +85,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       brush.src = customBrush.image;
       brushImageRef.current = brush;
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,8 +126,6 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
   const handlePointerMove = (e: MouseOrTouchEvent) => {
     if (!isDrawing.current) return;
-
-    e.preventDefault();
 
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -181,6 +180,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     position: 'absolute',
     top: 0,
     zIndex: 1,
+    touchAction: 'none',
   };
 
   const resultStyle: React.CSSProperties = {
