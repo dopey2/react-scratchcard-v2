@@ -20,7 +20,8 @@ export type { CustomCheckZone };
 export type Props = {
   width: number;
   height: number;
-  image: string;
+  coverImage?: string;
+  coverColor?: string;
   finishPercent?: number;
   onComplete?: () => void;
   onScratchEnd?: () => void;
@@ -44,6 +45,8 @@ type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
 
+const DEFAULT_COVER_COLOR = '#ccc';
+
 const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   props,
   ref
@@ -51,7 +54,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const {
     width,
     height,
-    image,
+    coverImage,
+    coverColor,
     finishPercent = 70,
     onComplete,
     onScratchEnd,
@@ -76,6 +80,19 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const lastPoint = useRef<Point | null>(null);
   const isFinished = useRef(false);
 
+  const drawCover = useCallback((ctx: CanvasRenderingContext2D) => {
+    if (coverImage) {
+      const img = imageRef.current;
+      if (!img) return;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(img, 0, 0, width, height);
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = coverColor ?? DEFAULT_COVER_COLOR;
+      ctx.fillRect(0, 0, width, height);
+    }
+  }, [coverImage, coverColor, width, height]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,14 +100,19 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     ctxRef.current = canvas.getContext('2d', { willReadFrequently: true });
     if (ctxRef.current) ctxRef.current.imageSmoothingQuality = imageSmoothingQuality;
 
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => {
-      ctxRef.current?.drawImage(img, 0, 0, width, height);
+    if (coverImage) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        imageRef.current = img;
+        if (ctxRef.current) drawCover(ctxRef.current);
+        setLoaded(true);
+      };
+      img.src = coverImage;
+    } else {
+      if (ctxRef.current) drawCover(ctxRef.current);
       setLoaded(true);
-    };
-    img.src = image;
-    imageRef.current = img;
+    }
 
     if (customBrush) {
       const brush = new Image(customBrush.width, customBrush.height);
@@ -104,14 +126,12 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const reset = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
-    const img = imageRef.current;
-    if (!canvas || !ctx || !img) return;
+    if (!canvas || !ctx) return;
 
     canvas.style.opacity = '1';
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(img, 0, 0, width, height);
+    drawCover(ctx);
     isFinished.current = false;
-  }, [width, height]);
+  }, [drawCover]);
 
   const revealAll = useCallback(() => {
     const canvas = canvasRef.current;
