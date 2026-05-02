@@ -25,6 +25,10 @@ export type Props = {
   finishPercent?: number;
   onComplete?: () => void;
   onScratchEnd?: () => void;
+  /**
+   * Fires on each pixel sample during scratching. Throttled by `scratchInterval`.
+   * @param percent - Current percentage of pixels erased (0–100).
+   */
   onScratch?: (percent: number) => void;
   brushSize?: number;
   lockOnComplete?: boolean;
@@ -32,7 +36,12 @@ export type Props = {
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
   imageSmoothingQuality?: ImageSmoothingQuality;
-  sampleInterval?: number;
+  /**
+   * Minimum milliseconds between `onScratch` callbacks. Does not affect the visual scratching effect —
+   * brush strokes are drawn on every move regardless. Lower values call `onScratch` more frequently
+   * at higher CPU cost. Set to `0` to fire on every move. Defaults to `50`.
+   */
+  scratchInterval?: number;
   ariaLabel?: string;
   canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
   /**
@@ -86,7 +95,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     customBrush,
     customCheckZone,
     imageSmoothingQuality = 'low',
-    sampleInterval = 50,
+    scratchInterval = 50,
     ariaLabel,
     canvasProps,
     pixelRatio,
@@ -278,7 +287,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     lastPoint.current = currentPoint;
 
     const now = Date.now();
-    if (now - lastSampleTime.current >= sampleInterval) {
+    if (now - lastSampleTime.current >= scratchInterval) {
       lastSampleTime.current = now;
       const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone, dprRef.current);
       onScratch?.(filledInPercent);

@@ -46,7 +46,7 @@ beforeEach(() => {
 
 const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) => {
   return render(
-    <ScratchCard width={300} height={200} coverImage='test.jpg' sampleInterval={0} {...props} />
+    <ScratchCard width={300} height={200} coverImage='test.jpg' scratchInterval={0} {...props} />
   );
 };
 
@@ -121,7 +121,7 @@ describe('ScratchCard', () => {
     });
   });
 
-  describe('sampleInterval', () => {
+  describe('scratchInterval', () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -130,8 +130,8 @@ describe('ScratchCard', () => {
       vi.useRealTimers();
     });
 
-    it('samples on every move when sampleInterval is 0', () => {
-      const { container } = setup({ sampleInterval: 0 });
+    it('samples on every move when scratchInterval is 0', () => {
+      const { container } = setup({ scratchInterval: 0 });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
       fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
@@ -140,7 +140,7 @@ describe('ScratchCard', () => {
     });
 
     it('skips sampling within the interval', () => {
-      const { container } = setup({ sampleInterval: 50 });
+      const { container } = setup({ scratchInterval: 50 });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
       fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
@@ -149,7 +149,7 @@ describe('ScratchCard', () => {
     });
 
     it('samples again after the interval has passed', () => {
-      const { container } = setup({ sampleInterval: 50 });
+      const { container } = setup({ scratchInterval: 50 });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
       fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
@@ -160,7 +160,7 @@ describe('ScratchCard', () => {
 
     it('throttles onScratch within the interval', () => {
       const onScratch = vi.fn();
-      const { container } = setup({ sampleInterval: 50, onScratch });
+      const { container } = setup({ scratchInterval: 50, onScratch });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
       fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
@@ -169,7 +169,7 @@ describe('ScratchCard', () => {
     });
 
     it('drawing is not throttled — arc is called on every move regardless of interval', () => {
-      const { container } = setup({ sampleInterval: 50 });
+      const { container } = setup({ scratchInterval: 50 });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
       fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
