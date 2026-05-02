@@ -32,6 +32,14 @@ export const getCoords = (
   };
 };
 
+export const getOpaqueIndices = (data: Uint8ClampedArray): number[] => {
+  const indices: number[] = [];
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 0) indices.push(i);
+  }
+  return indices;
+};
+
 export const getFilledInPixels = (
   stride: number,
   ctx: CanvasRenderingContext2D,

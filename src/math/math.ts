@@ -16,3 +16,10 @@ export const angleBetween = (p1: Point | null, p2: Point | null): number => {
   }
   return 0;
 };
+
+export const shuffleInPlace = (arr: number[]): void => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+};

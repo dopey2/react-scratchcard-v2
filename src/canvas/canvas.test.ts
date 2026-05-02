@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getCoords, getFilledInPixels } from './canvas';
+import { getCoords, getFilledInPixels, getOpaqueIndices } from './canvas';
 
 const mockCanvas = (top = 0, left = 0, width = 100, height = 100) =>
   ({
@@ -90,5 +90,26 @@ describe('getFilledInPixels', () => {
       },
     } as unknown as CanvasRenderingContext2D;
     getFilledInPixels(4, ctx, mockCanvas(0, 0, 100, 100), { x: 10, y: 20, width: 50, height: 30 });
+  });
+});
+
+describe('getOpaqueIndices', () => {
+  it('returns alpha indices of opaque pixels', () => {
+    const data = new Uint8ClampedArray([
+      255, 0, 0, 255,  // opaque — alpha index 3
+      0, 0, 0, 0,      // transparent — skipped
+      0, 255, 0, 128,  // semi-transparent — alpha index 11
+    ]);
+    expect(getOpaqueIndices(data)).toEqual([3, 11]);
+  });
+
+  it('returns empty array when all pixels are transparent', () => {
+    const data = new Uint8ClampedArray([0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(getOpaqueIndices(data)).toEqual([]);
+  });
+
+  it('returns all alpha indices when all pixels are opaque', () => {
+    const data = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
+    expect(getOpaqueIndices(data)).toEqual([3, 7]);
   });
 });

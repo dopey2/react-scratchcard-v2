@@ -10,6 +10,7 @@ const transparent = new Uint8ClampedArray(4);
 const mockCtx = {
   drawImage: vi.fn(),
   getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(opaque) })),
+  putImageData: vi.fn(),
   beginPath: vi.fn(),
   arc: vi.fn(),
   fill: vi.fn(),
@@ -33,6 +34,7 @@ beforeAll(() => {
 beforeEach(() => {
   mockCtx.drawImage.mockClear();
   mockCtx.getImageData.mockReset();
+  mockCtx.putImageData.mockClear();
   mockCtx.beginPath.mockClear();
   mockCtx.arc.mockClear();
   mockCtx.fill.mockClear();
@@ -310,6 +312,70 @@ describe('ScratchCard', () => {
       scratch(container.querySelector('canvas')!);
       act(() => { ref.current?.revealAll(); });
       expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    describe('animated (duration option)', () => {
+      beforeEach(() => { vi.useFakeTimers(); });
+      afterEach(() => { vi.useRealTimers(); });
+
+      it('does not call onComplete immediately when duration is given', () => {
+        const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
+        mockCtx.getImageData.mockReturnValue({ data: opaqueData });
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, onComplete });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        expect(onComplete).not.toHaveBeenCalled();
+      });
+
+      it('calls onComplete after animation finishes', () => {
+        const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
+        mockCtx.getImageData.mockReturnValue({ data: opaqueData });
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, onComplete });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        act(() => { vi.runAllTimers(); });
+        expect(onComplete).toHaveBeenCalledTimes(1);
+      });
+
+      it('calls putImageData during animation', () => {
+        const putImageData = vi.fn();
+        (HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>).mockReturnValue({
+          ...mockCtx,
+          putImageData,
+        });
+        const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
+        mockCtx.getImageData.mockReturnValue({ data: opaqueData });
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        act(() => { vi.advanceTimersByTime(16); });
+        expect(putImageData).toHaveBeenCalled();
+        (HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>).mockReturnValue(mockCtx);
+      });
+
+      it('cancels animation and does not call onComplete when reset mid-animation', () => {
+        const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
+        mockCtx.getImageData.mockReturnValue({ data: opaqueData });
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, onComplete });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        act(() => { ref.current?.reset(); });
+        act(() => { vi.runAllTimers(); });
+        expect(onComplete).not.toHaveBeenCalled();
+      });
+
+      it('skips animation when all pixels are already transparent', () => {
+        mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray([255, 255, 255, 0]) });
+        const onComplete = vi.fn();
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, onComplete });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        act(() => { vi.runAllTimers(); });
+        expect(onComplete).toHaveBeenCalledTimes(1);
+      });
     });
   });
 

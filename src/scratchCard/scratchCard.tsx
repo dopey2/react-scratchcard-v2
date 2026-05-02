@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getCoords, getFilledInPixels, type CustomCheckZone } from '../canvas/canvas';
-import { angleBetween, distanceBetween, type Point } from '../math/math';
+import { getCoords, getFilledInPixels, getOpaqueIndices, type CustomCheckZone } from '../canvas/canvas';
+import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 
 export type CustomBrush = {
   image: string;
@@ -37,9 +37,14 @@ export type Props = {
   canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
 };
 
+export type RevealAllOptions = {
+  duration?: number;
+  interval?: number;
+};
+
 export type ScratchCardRef = {
   reset: () => void;
-  revealAll: () => void;
+  revealAll: (options?: RevealAllOptions) => void;
 };
 
 type MouseOrTouchEvent =
@@ -82,6 +87,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const lastPoint = useRef<Point | null>(null);
   const isFinished = useRef(false);
   const lastSampleTime = useRef(0);
+  const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const drawCover = useCallback((ctx: CanvasRenderingContext2D) => {
     if (coverImage) {
@@ -131,26 +137,63 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const ctx = ctxRef.current;
     if (!canvas || !ctx) return;
 
+    if (revealIntervalRef.current) {
+      clearInterval(revealIntervalRef.current);
+      revealIntervalRef.current = null;
+    }
+
     canvas.style.opacity = '1';
+    canvas.style.transition = '';
     drawCover(ctx);
     isFinished.current = false;
   }, [drawCover]);
 
-  const revealAll = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx || isFinished.current) return;
-
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillRect(0, 0, width, height);
-
+  const finish = useCallback((canvas: HTMLCanvasElement) => {
     if (fadeOutOnComplete) {
       canvas.style.transition = '1s';
       canvas.style.opacity = '0';
     }
     onComplete?.();
     isFinished.current = true;
-  }, [width, height, fadeOutOnComplete, onComplete]);
+  }, [fadeOutOnComplete, onComplete]);
+
+  const revealAll = useCallback((options?: RevealAllOptions) => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx || isFinished.current) return;
+
+    if (!options?.duration) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillRect(0, 0, width, height);
+      finish(canvas);
+      return;
+    }
+
+    const { duration, interval = 16 } = options;
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const { data } = imageData;
+
+    const opaque = getOpaqueIndices(data);
+    shuffleInPlace(opaque);
+
+    const batchSize = Math.ceil(opaque.length / (duration / interval));
+    let offset = 0;
+
+    revealIntervalRef.current = setInterval(() => {
+      const end = Math.min(offset + batchSize, opaque.length);
+      for (let i = offset; i < end; i++) {
+        data[opaque[i]] = 0;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      offset = end;
+
+      if (offset >= opaque.length) {
+        clearInterval(revealIntervalRef.current!);
+        revealIntervalRef.current = null;
+        finish(canvas);
+      }
+    }, interval);
+  }, [width, height, finish]);
 
   useImperativeHandle(ref, () => ({ reset, revealAll }), [reset, revealAll]);
 
