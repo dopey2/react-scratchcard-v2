@@ -48,7 +48,7 @@ export const getFilledInPixels = (
   let count = 0;
 
   for (let i = 0; i < pixels.data.length; i += stride) {
-    if (pixels.data[i] === 0) {
+    if (pixels.data[i + 3] === 0) {
       count++;
     }
   }
