@@ -37,6 +37,7 @@ export type Props = {
 
 export type ScratchCardRef = {
   reset: () => void;
+  revealAll: () => void;
 };
 
 type MouseOrTouchEvent =
@@ -112,7 +113,23 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     isFinished.current = false;
   }, [width, height]);
 
-  useImperativeHandle(ref, () => ({ reset }), [reset]);
+  const revealAll = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx || isFinished.current) return;
+
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillRect(0, 0, width, height);
+
+    if (fadeOutOnComplete) {
+      canvas.style.transition = '1s';
+      canvas.style.opacity = '0';
+    }
+    onComplete?.();
+    isFinished.current = true;
+  }, [width, height, fadeOutOnComplete, onComplete]);
+
+  useImperativeHandle(ref, () => ({ reset, revealAll }), [reset, revealAll]);
 
   const handlePercentage = (filledInPixels: number) => {
     if (isFinished.current) return;

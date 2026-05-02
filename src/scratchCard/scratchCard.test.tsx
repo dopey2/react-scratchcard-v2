@@ -13,7 +13,9 @@ const mockCtx = {
   beginPath: vi.fn(),
   arc: vi.fn(),
   fill: vi.fn(),
+  fillRect: vi.fn(),
   globalCompositeOperation: '',
+  imageSmoothingQuality: 'low',
 };
 
 beforeAll(() => {
@@ -127,6 +129,16 @@ describe('ScratchCard', () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
+    it('does not call onComplete after revealAll via further scratching', () => {
+      mockCtx.getImageData.mockReturnValue({ data: transparent });
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      const { container } = setup({ ref, onComplete });
+      act(() => { ref.current?.revealAll(); });
+      scratch(container.querySelector('canvas')!);
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
     it('calls onComplete only once across multiple moves', () => {
       const onComplete = vi.fn();
       const { container } = setup({ onComplete });
@@ -193,6 +205,53 @@ describe('ScratchCard', () => {
       setup({ onScratchEnd });
       fireEvent.mouseUp(window);
       expect(onScratchEnd).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('revealAll()', () => {
+    it('calls onComplete', () => {
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      setup({ ref, onComplete });
+      act(() => { ref.current?.revealAll(); });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('fades canvas out when fadeOutOnComplete is true', () => {
+      const ref = createRef<ScratchCardRef>();
+      const { container } = setup({ ref });
+      act(() => { ref.current?.revealAll(); });
+      expect((container.querySelector('canvas') as HTMLElement).style.opacity).toBe('0');
+    });
+
+    it('does not call onComplete a second time', () => {
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      setup({ ref, onComplete });
+      act(() => { ref.current?.revealAll(); });
+      act(() => { ref.current?.revealAll(); });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('allows onComplete to fire again after reset', () => {
+      mockCtx.getImageData.mockReturnValue({ data: transparent });
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      const { container } = setup({ ref, onComplete });
+      act(() => { ref.current?.revealAll(); });
+      act(() => { ref.current?.reset(); });
+      scratch(container.querySelector('canvas')!);
+      expect(onComplete).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not call onComplete if already completed via scratch', () => {
+      mockCtx.getImageData.mockReturnValue({ data: transparent });
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      const { container } = setup({ ref, onComplete });
+      scratch(container.querySelector('canvas')!);
+      act(() => { ref.current?.revealAll(); });
+      expect(onComplete).toHaveBeenCalledTimes(1);
     });
   });
 
