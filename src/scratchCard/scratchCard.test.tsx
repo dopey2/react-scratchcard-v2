@@ -160,6 +160,42 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('onScratchEnd', () => {
+    it('fires onScratchEnd on mouseup', () => {
+      const onScratchEnd = vi.fn();
+      const { container } = setup({ onScratchEnd });
+      const canvas = container.querySelector('canvas')!;
+      scratch(canvas);
+      fireEvent.mouseUp(canvas);
+      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires onScratchEnd on touchend', () => {
+      const onScratchEnd = vi.fn();
+      const { container } = setup({ onScratchEnd });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.touchStart(canvas, { touches: [{ clientX: 50, clientY: 50 }] });
+      fireEvent.touchMove(canvas, { touches: [{ clientX: 100, clientY: 100 }] });
+      fireEvent.touchEnd(canvas);
+      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires onScratchEnd on global mouseup (released outside canvas)', () => {
+      const onScratchEnd = vi.fn();
+      const { container } = setup({ onScratchEnd });
+      scratch(container.querySelector('canvas')!);
+      fireEvent.mouseUp(window);
+      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fire onScratchEnd if pointer was never down', () => {
+      const onScratchEnd = vi.fn();
+      setup({ onScratchEnd });
+      fireEvent.mouseUp(window);
+      expect(onScratchEnd).not.toHaveBeenCalled();
+    });
+  });
+
   describe('reset()', () => {
     it('restores canvas opacity after completion', () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });

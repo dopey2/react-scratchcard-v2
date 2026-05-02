@@ -23,6 +23,8 @@ export type Props = {
   image: string;
   finishPercent?: number;
   onComplete?: () => void;
+  onScratchEnd?: () => void;
+  onScratch?: (percent: number) => void;
   brushSize?: number;
   fadeOutOnComplete?: boolean;
   children?: React.ReactNode;
@@ -48,6 +50,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     image,
     finishPercent = 70,
     onComplete,
+    onScratchEnd,
+    onScratch,
     brushSize = 20,
     fadeOutOnComplete = true,
     children,
@@ -161,12 +165,21 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     lastPoint.current = currentPoint;
-    handlePercentage(getFilledInPixels(32, ctx, canvas, customCheckZone));
+    const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone);
+    onScratch?.(filledInPercent);
+    handlePercentage(filledInPercent);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = useCallback(() => {
+    if (!isDrawing.current) return;
     isDrawing.current = false;
-  };
+    onScratchEnd?.();
+  }, [onScratchEnd]);
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handlePointerUp);
+    return () => window.removeEventListener('mouseup', handlePointerUp);
+  }, [handlePointerUp]);
 
   const containerStyle: React.CSSProperties = {
     width: `${width}px`,
@@ -203,6 +216,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         onTouchMove={(e) => handlePointerMove(e)}
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
+        onTouchCancel={handlePointerUp}
       />
       <div className='ScratchCard__Result' style={resultStyle}>
         {children}
