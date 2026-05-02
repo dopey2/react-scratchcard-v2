@@ -90,6 +90,7 @@ export default function StateDemo() {
           setLastRelease(null);
         }}>Reset</button>
         <button onClick={() => cardRef.current?.revealAll()}>Reveal All</button>
+        <button onClick={() => cardRef.current?.revealAll({ duration: 1500 })}>Reveal (animated)</button>
       </div>
 
       <div
