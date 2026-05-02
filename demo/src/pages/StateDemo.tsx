@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ScratchCard from 'react-scratchcard-v2';
+import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
 import img from '../img.jpg';
 
 type Release = 'inside' | 'outside' | null;
@@ -27,6 +27,7 @@ const valueStyle = (color: string): React.CSSProperties => ({
 });
 
 export default function StateDemo() {
+  const cardRef = useRef<ScratchCardRef>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const releasedInsideRef = useRef(false);
 
@@ -81,6 +82,16 @@ export default function StateDemo() {
         </div>
       </div>
 
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button onClick={() => {
+          cardRef.current?.reset();
+          setPercent(0);
+          setIsComplete(false);
+          setLastRelease(null);
+        }}>Reset</button>
+        <button onClick={() => cardRef.current?.revealAll()}>Reveal All</button>
+      </div>
+
       <div
         ref={wrapperRef}
         style={{ display: 'inline-block' }}
@@ -88,6 +99,7 @@ export default function StateDemo() {
         onTouchStart={() => setIsScratching(true)}
       >
         <ScratchCard
+          ref={cardRef}
           width={320}
           height={226}
           image={img}
