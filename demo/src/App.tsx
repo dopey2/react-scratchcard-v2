@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import BasicDemo from './pages/BasicDemo';
 import ScrollTest from './pages/ScrollTest';
+import StateDemo from './pages/StateDemo';
 
 const PAGES = {
   basic: 'Basic Demo',
   scroll: 'Scroll Test',
+  state: 'State Test',
 } as const;
 
 type Page = keyof typeof PAGES;
@@ -44,6 +46,7 @@ export default function App() {
       </nav>
       {page === 'basic' && <BasicDemo />}
       {page === 'scroll' && <ScrollTest />}
+      {page === 'state' && <StateDemo />}
     </div>
   );
 }
