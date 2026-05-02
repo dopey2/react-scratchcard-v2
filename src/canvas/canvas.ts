@@ -44,12 +44,13 @@ export const getFilledInPixels = (
   stride: number,
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  customCheckZone?: CustomCheckZone
+  customCheckZone?: CustomCheckZone,
+  dpr = 1
 ): number => {
-  const x = customCheckZone?.x ?? 0;
-  const y = customCheckZone?.y ?? 0;
-  const w = customCheckZone?.width ?? canvas.width;
-  const h = customCheckZone?.height ?? canvas.height;
+  const x = customCheckZone ? Math.floor(customCheckZone.x * dpr) : 0;
+  const y = customCheckZone ? Math.floor(customCheckZone.y * dpr) : 0;
+  const w = customCheckZone ? Math.floor(customCheckZone.width * dpr) : canvas.width;
+  const h = customCheckZone ? Math.floor(customCheckZone.height * dpr) : canvas.height;
 
   const pixels = ctx.getImageData(x, y, w, h);
   const total = pixels.data.length / stride;

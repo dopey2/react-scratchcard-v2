@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import ScratchCard from './scratchCard';
@@ -15,6 +15,7 @@ const mockCtx = {
   arc: vi.fn(),
   fill: vi.fn(),
   fillRect: vi.fn(),
+  scale: vi.fn(),
   globalCompositeOperation: '',
   imageSmoothingQuality: 'low',
 };
@@ -38,6 +39,7 @@ beforeEach(() => {
   mockCtx.beginPath.mockClear();
   mockCtx.arc.mockClear();
   mockCtx.fill.mockClear();
+  mockCtx.scale.mockClear();
   mockCtx.globalCompositeOperation = '';
   mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(opaque) });
 });
@@ -436,6 +438,52 @@ describe('ScratchCard', () => {
       act(() => { ref.current?.reset(); });
       scratch(canvas);
       expect(onComplete).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('devicePixelRatio scaling', () => {
+    afterEach(() => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+    });
+
+    it('scales canvas buffer by DPR on mount', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+      const { container } = setup({ width: 300, height: 200 });
+      const canvas = container.querySelector('canvas')!;
+      expect(canvas.width).toBe(600);
+      expect(canvas.height).toBe(400);
+    });
+
+    it('is a no-op at DPR=1 — buffer matches props', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+      const { container } = setup({ width: 300, height: 200 });
+      const canvas = container.querySelector('canvas')!;
+      expect(canvas.width).toBe(300);
+      expect(canvas.height).toBe(200);
+    });
+
+    it('calls ctx.scale with DPR on mount', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+      setup();
+      expect(mockCtx.scale).toHaveBeenCalledWith(2, 2);
+    });
+
+    it('arc coordinates are CSS pixels, not pre-multiplied by DPR', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+      const { container } = setup();
+      scratch(container.querySelector('canvas')!, { x: 50, y: 50 }, { x: 60, y: 60 });
+      mockCtx.arc.mock.calls.forEach((call: number[]) => {
+        expect(call[0]).toBeLessThan(200);
+        expect(call[1]).toBeLessThan(200);
+      });
+    });
+
+    it('customCheckZone coordinates are multiplied by DPR before getImageData', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+      const customCheckZone = { x: 10, y: 20, width: 50, height: 30 };
+      const { container } = setup({ customCheckZone });
+      scratch(container.querySelector('canvas')!);
+      expect(mockCtx.getImageData).toHaveBeenCalledWith(20, 40, 100, 60);
     });
   });
 });

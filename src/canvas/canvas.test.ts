@@ -91,6 +91,32 @@ describe('getFilledInPixels', () => {
     } as unknown as CanvasRenderingContext2D;
     getFilledInPixels(4, ctx, mockCanvas(0, 0, 100, 100), { x: 10, y: 20, width: 50, height: 30 });
   });
+
+  it('multiplies customCheckZone by DPR', () => {
+    const ctx = {
+      getImageData: (x: number, y: number, w: number, h: number) => {
+        expect(x).toBe(20);
+        expect(y).toBe(40);
+        expect(w).toBe(100);
+        expect(h).toBe(60);
+        return { data: new Uint8ClampedArray(100 * 60 * 4) };
+      },
+    } as unknown as CanvasRenderingContext2D;
+    getFilledInPixels(4, ctx, mockCanvas(0, 0, 200, 160), { x: 10, y: 20, width: 50, height: 30 }, 2);
+  });
+
+  it('uses full buffer dimensions when no zone given at DPR=2', () => {
+    const ctx = {
+      getImageData: (x: number, y: number, w: number, h: number) => {
+        expect(x).toBe(0);
+        expect(y).toBe(0);
+        expect(w).toBe(200);
+        expect(h).toBe(160);
+        return { data: new Uint8ClampedArray(200 * 160 * 4) };
+      },
+    } as unknown as CanvasRenderingContext2D;
+    getFilledInPixels(4, ctx, mockCanvas(0, 0, 200, 160), undefined, 2);
+  });
 });
 
 describe('getOpaqueIndices', () => {

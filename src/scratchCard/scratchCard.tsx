@@ -89,6 +89,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const hasCompleted = useRef(false);
   const lastSampleTime = useRef(0);
   const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dprRef = useRef(1);
 
   const drawCover = useCallback((ctx: CanvasRenderingContext2D) => {
     if (coverImage) {
@@ -107,8 +108,18 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const dpr = window.devicePixelRatio ?? 1;
+    dprRef.current = dpr;
+
+    // Set buffer dimensions first — assigning canvas.width resets context state.
+    // scale() and imageSmoothingQuality must be applied after.
     ctxRef.current = canvas.getContext('2d', { willReadFrequently: true });
-    if (ctxRef.current) ctxRef.current.imageSmoothingQuality = imageSmoothingQuality;
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    if (ctxRef.current) {
+      ctxRef.current.scale(dpr, dpr);
+      ctxRef.current.imageSmoothingQuality = imageSmoothingQuality;
+    }
 
     if (coverImage) {
       const img = new Image();
@@ -169,7 +180,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     const { duration, interval = 16 } = options;
-    const imageData = ctx.getImageData(0, 0, width, height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const { data } = imageData;
 
     const opaque = getOpaqueIndices(data);
@@ -254,7 +265,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const now = Date.now();
     if (now - lastSampleTime.current >= sampleInterval) {
       lastSampleTime.current = now;
-      const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone);
+      const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone, dprRef.current);
       onScratch?.(filledInPercent);
       handlePercentage(filledInPercent);
     }
@@ -284,6 +295,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     top: 0,
     zIndex: 1,
     touchAction: 'none',
+    width: `${width}px`,
+    height: `${height}px`,
   };
 
   const resultStyle: React.CSSProperties = {
