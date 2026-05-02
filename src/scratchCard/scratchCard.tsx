@@ -30,6 +30,7 @@ export type Props = {
   children?: React.ReactNode;
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
+  imageSmoothingQuality?: ImageSmoothingQuality;
 };
 
 export type ScratchCardRef = {
@@ -57,6 +58,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     children,
     customBrush,
     customCheckZone,
+    imageSmoothingQuality = 'low',
   } = props;
 
   const [loaded, setLoaded] = useState(false);
@@ -73,7 +75,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    ctxRef.current = canvas.getContext('2d');
+    ctxRef.current = canvas.getContext('2d', { willReadFrequently: true });
+    if (ctxRef.current) ctxRef.current.imageSmoothingQuality = imageSmoothingQuality;
 
     const img = new Image();
     img.crossOrigin = 'Anonymous';
