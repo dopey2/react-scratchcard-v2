@@ -135,6 +135,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const bgCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const brushImageRef = useRef<HTMLImageElement | null>(null);
   const isDrawing = useRef(false);
@@ -159,6 +161,32 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       ctx.fillRect(0, 0, width, height);
     }
   }, [coverImage, coverColor, width, height]);
+
+  // Redraws the background canvas: full cover with the scratch region interior erased.
+  // This creates a "donut" that stays visible under the main canvas when it fades via CSS.
+  const drawBgCover = useCallback(() => {
+    const bgCanvas = bgCanvasRef.current;
+    const bgCtx = bgCtxRef.current;
+    if (!bgCanvas || !bgCtx) return;
+
+    drawCover(bgCtx);
+
+    if (scratchRegionPathRef.current) {
+      bgCtx.globalCompositeOperation = 'destination-out';
+      bgCtx.save();
+      bgCtx.clip(scratchRegionPathRef.current);
+      bgCtx.fillRect(0, 0, width, height);
+      bgCtx.restore();
+      bgCtx.globalCompositeOperation = 'source-over';
+    } else if (scratchMaskRef.current) {
+      const imageData = bgCtx.getImageData(0, 0, bgCanvas.width, bgCanvas.height);
+      const { data } = imageData;
+      for (let i = 3; i < data.length; i += 4) {
+        if (scratchMaskRef.current[(i - 3) / 4]) data[i] = 0;
+      }
+      bgCtx.putImageData(imageData, 0, 0);
+    }
+  }, [drawCover, width, height]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -197,12 +225,26 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     if (scratchRegion) {
-      buildRegionMask(scratchRegion, canvas.width, canvas.height, dpr, (mask) => {
-        scratchMaskRef.current = mask;
-      });
+      const bgCanvas = bgCanvasRef.current;
+      if (bgCanvas) {
+        bgCtxRef.current = bgCanvas.getContext('2d');
+        bgCanvas.width = Math.floor(width * dpr);
+        bgCanvas.height = Math.floor(height * dpr);
+        if (bgCtxRef.current) {
+          bgCtxRef.current.scale(dpr, dpr);
+          bgCtxRef.current.imageSmoothingQuality = imageSmoothingQuality;
+        }
+      }
+
+      // Build path before mask so it's available when the (synchronous) callback fires.
       if (scratchRegion.type !== 'image') {
         scratchRegionPathRef.current = buildRegionPath(scratchRegion);
       }
+
+      buildRegionMask(scratchRegion, canvas.width, canvas.height, dpr, (mask) => {
+        scratchMaskRef.current = mask;
+        drawBgCover();
+      });
     }
 
     if (validationRegion) {
@@ -225,9 +267,10 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     drawCover(ctx);
+    drawBgCover();
     isFinished.current = false;
     hasCompleted.current = false;
-  }, [drawCover]);
+  }, [drawCover, drawBgCover]);
 
   const finish = useCallback(() => {
     if (!hasCompleted.current) {
@@ -249,6 +292,13 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         ctx.clip(scratchRegionPathRef.current);
         ctx.fillRect(0, 0, width, height);
         ctx.restore();
+      } else if (scratchMaskRef.current) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { data } = imageData;
+        for (let i = 3; i < data.length; i += 4) {
+          if (scratchMaskRef.current[(i - 3) / 4]) data[i] = 0;
+        }
+        ctx.putImageData(imageData, 0, 0);
       } else {
         ctx.fillRect(0, 0, width, height);
       }
@@ -348,7 +398,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const now = Date.now();
     if (now - lastSampleTime.current >= scratchInterval) {
       lastSampleTime.current = now;
-      const filledInPercent = getFilledInPixels(32, ctx, canvas, validationMaskRef.current);
+      const filledInPercent = getFilledInPixels(32, ctx, canvas, validationMaskRef.current ?? scratchMaskRef.current);
       onScratch?.(filledInPercent);
       handlePercentage(filledInPercent);
     }
@@ -382,6 +432,15 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     height: `${height}px`,
   };
 
+  const bgCanvasStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    zIndex: 0,
+    pointerEvents: 'none',
+    width: `${width}px`,
+    height: `${height}px`,
+  };
+
   const resultStyle: React.CSSProperties = {
     visibility: loaded ? 'visible' : 'hidden',
     width: '100%',
@@ -407,6 +466,16 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         onTouchEnd={handlePointerUp}
         onTouchCancel={handlePointerUp}
       />
+      {scratchRegion && (
+        <canvas
+          ref={bgCanvasRef}
+          className='ScratchCard__CoverBackground'
+          style={bgCanvasStyle}
+          width={width}
+          height={height}
+          aria-hidden
+        />
+      )}
       <div className='ScratchCard__Result' style={resultStyle}>
         {children}
       </div>
