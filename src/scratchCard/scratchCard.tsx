@@ -31,6 +31,7 @@ export type Props = {
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
   imageSmoothingQuality?: ImageSmoothingQuality;
+  ariaLabel?: string;
 };
 
 export type ScratchCardRef = {
@@ -59,6 +60,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     customBrush,
     customCheckZone,
     imageSmoothingQuality = 'low',
+    ariaLabel,
   } = props;
 
   const [loaded, setLoaded] = useState(false);
@@ -217,6 +219,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         onTouchStart={(e) => handlePointerDown(e)}
         onMouseMove={(e) => handlePointerMove(e)}
         onTouchMove={(e) => handlePointerMove(e)}
+        aria-label={ariaLabel}
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
         onTouchCancel={handlePointerUp}
