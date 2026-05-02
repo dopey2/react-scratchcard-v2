@@ -32,6 +32,7 @@ export type Props = {
   customBrush?: CustomBrush;
   customCheckZone?: CustomCheckZone;
   imageSmoothingQuality?: ImageSmoothingQuality;
+  sampleInterval?: number;
   ariaLabel?: string;
   canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
 };
@@ -66,6 +67,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     customBrush,
     customCheckZone,
     imageSmoothingQuality = 'low',
+    sampleInterval = 50,
     ariaLabel,
     canvasProps,
   } = props;
@@ -79,6 +81,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
   const isFinished = useRef(false);
+  const lastSampleTime = useRef(0);
 
   const drawCover = useCallback((ctx: CanvasRenderingContext2D) => {
     if (coverImage) {
@@ -209,9 +212,14 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     lastPoint.current = currentPoint;
-    const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone);
-    onScratch?.(filledInPercent);
-    handlePercentage(filledInPercent);
+
+    const now = Date.now();
+    if (now - lastSampleTime.current >= sampleInterval) {
+      lastSampleTime.current = now;
+      const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone);
+      onScratch?.(filledInPercent);
+      handlePercentage(filledInPercent);
+    }
   };
 
   const handlePointerUp = useCallback(() => {

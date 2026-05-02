@@ -42,7 +42,7 @@ beforeEach(() => {
 
 const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) => {
   return render(
-    <ScratchCard width={300} height={200} coverImage='test.jpg' {...props} />
+    <ScratchCard width={300} height={200} coverImage='test.jpg' sampleInterval={0} {...props} />
   );
 };
 
