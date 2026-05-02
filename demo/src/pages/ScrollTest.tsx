@@ -39,12 +39,12 @@ export default function ScrollTest() {
         <ScratchCard
           width={320}
           height={226}
-          image={img}
+          coverImage={img}
           finishPercent={80}
           onComplete={() => console.log('complete')}
         >
           <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-            <h2>You win!</h2>
+            <p style={{ color: '#555', fontSize: '0.9rem' }}>Your content here</p>
           </div>
         </ScratchCard>
       </div>
