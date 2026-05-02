@@ -117,6 +117,64 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('sampleInterval', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('samples on every move when sampleInterval is 0', () => {
+      const { container } = setup({ sampleInterval: 0 });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
+      expect(mockCtx.getImageData).toHaveBeenCalledTimes(2);
+    });
+
+    it('skips sampling within the interval', () => {
+      const { container } = setup({ sampleInterval: 50 });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
+      expect(mockCtx.getImageData).toHaveBeenCalledTimes(1);
+    });
+
+    it('samples again after the interval has passed', () => {
+      const { container } = setup({ sampleInterval: 50 });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
+      vi.advanceTimersByTime(51);
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
+      expect(mockCtx.getImageData).toHaveBeenCalledTimes(2);
+    });
+
+    it('throttles onScratch within the interval', () => {
+      const onScratch = vi.fn();
+      const { container } = setup({ sampleInterval: 50, onScratch });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
+      expect(onScratch).toHaveBeenCalledTimes(1);
+    });
+
+    it('drawing is not throttled — arc is called on every move regardless of interval', () => {
+      const { container } = setup({ sampleInterval: 50 });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 10, clientY: 10 });
+      fireEvent.mouseMove(canvas, { clientX: 50, clientY: 50 });
+      const arcCallsAfterFirst = mockCtx.arc.mock.calls.length;
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 100 });
+      expect(mockCtx.arc.mock.calls.length).toBeGreaterThan(arcCallsAfterFirst);
+    });
+  });
+
   describe('completion', () => {
     beforeEach(() => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
