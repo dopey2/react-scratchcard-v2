@@ -4,14 +4,6 @@ type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
 
-/** Rectangle (in pixels) that restricts which area counts toward the completion percentage. */
-export type CustomCheckZone = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 export const getCoords = (
   e: MouseOrTouchEvent,
   canvas: HTMLCanvasElement
@@ -33,9 +25,10 @@ export const getCoords = (
   };
 };
 
-export const getOpaqueIndices = (data: Uint8ClampedArray): number[] => {
+export const getOpaqueIndices = (data: Uint8ClampedArray, mask?: boolean[] | null): number[] => {
   const indices: number[] = [];
   for (let i = 3; i < data.length; i += 4) {
+    if (mask && !mask[(i - 3) / 4]) continue;
     if (data[i] > 0) indices.push(i);
   }
   return indices;
@@ -45,23 +38,19 @@ export const getFilledInPixels = (
   stride: number,
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  customCheckZone?: CustomCheckZone,
-  dpr = 1
+  mask?: boolean[] | null
 ): number => {
-  const x = customCheckZone ? Math.floor(customCheckZone.x * dpr) : 0;
-  const y = customCheckZone ? Math.floor(customCheckZone.y * dpr) : 0;
-  const w = customCheckZone ? Math.floor(customCheckZone.width * dpr) : canvas.width;
-  const h = customCheckZone ? Math.floor(customCheckZone.height * dpr) : canvas.height;
-
-  const pixels = ctx.getImageData(x, y, w, h);
-  const total = pixels.data.length / stride;
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const { data } = pixels;
+  let total = 0;
   let count = 0;
 
-  for (let i = 0; i < pixels.data.length; i += stride) {
-    if (pixels.data[i + 3] === 0) {
-      count++;
-    }
+  for (let i = 0; i < data.length; i += stride) {
+    if (mask && !mask[i / 4]) continue;
+    total++;
+    if (data[i + 3] === 0) count++;
   }
 
+  if (total === 0) return 0;
   return Math.round((count / total) * 100);
 };

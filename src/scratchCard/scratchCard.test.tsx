@@ -16,6 +16,9 @@ const mockCtx = {
   fill: vi.fn(),
   fillRect: vi.fn(),
   scale: vi.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
+  clip: vi.fn(),
   globalCompositeOperation: '',
   imageSmoothingQuality: 'low',
 };
@@ -40,6 +43,9 @@ beforeEach(() => {
   mockCtx.arc.mockClear();
   mockCtx.fill.mockClear();
   mockCtx.scale.mockClear();
+  mockCtx.save.mockClear();
+  mockCtx.restore.mockClear();
+  mockCtx.clip.mockClear();
   mockCtx.globalCompositeOperation = '';
   mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(opaque) });
 });
@@ -212,11 +218,10 @@ describe('ScratchCard', () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('passes customCheckZone bounds to getImageData', () => {
-      const customCheckZone = { x: 10, y: 20, width: 50, height: 30 };
-      const { container } = setup({ customCheckZone });
+    it('always reads the full canvas buffer for pixel sampling', () => {
+      const { container } = setup();
       scratch(container.querySelector('canvas')!);
-      expect(mockCtx.getImageData).toHaveBeenCalledWith(10, 20, 50, 30);
+      expect(mockCtx.getImageData).toHaveBeenCalledWith(0, 0, 300, 200);
     });
   });
 
@@ -478,12 +483,11 @@ describe('ScratchCard', () => {
       });
     });
 
-    it('customCheckZone coordinates are multiplied by DPR before getImageData', () => {
+    it('always reads the full canvas buffer regardless of DPR', () => {
       Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
-      const customCheckZone = { x: 10, y: 20, width: 50, height: 30 };
-      const { container } = setup({ customCheckZone });
+      const { container } = setup();
       scratch(container.querySelector('canvas')!);
-      expect(mockCtx.getImageData).toHaveBeenCalledWith(20, 40, 100, 60);
+      expect(mockCtx.getImageData).toHaveBeenCalledWith(0, 0, 600, 400);
     });
 
     it('pixelRatio prop overrides window.devicePixelRatio', () => {

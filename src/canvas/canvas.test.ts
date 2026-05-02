@@ -79,33 +79,7 @@ describe('getFilledInPixels', () => {
     expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 1))).toBe(50);
   });
 
-  it('respects customCheckZone bounds', () => {
-    const ctx = {
-      getImageData: (x: number, y: number, w: number, h: number) => {
-        expect(x).toBe(10);
-        expect(y).toBe(20);
-        expect(w).toBe(50);
-        expect(h).toBe(30);
-        return { data: new Uint8ClampedArray(50 * 30 * 4) };
-      },
-    } as unknown as CanvasRenderingContext2D;
-    getFilledInPixels(4, ctx, mockCanvas(0, 0, 100, 100), { x: 10, y: 20, width: 50, height: 30 });
-  });
-
-  it('multiplies customCheckZone by DPR', () => {
-    const ctx = {
-      getImageData: (x: number, y: number, w: number, h: number) => {
-        expect(x).toBe(20);
-        expect(y).toBe(40);
-        expect(w).toBe(100);
-        expect(h).toBe(60);
-        return { data: new Uint8ClampedArray(100 * 60 * 4) };
-      },
-    } as unknown as CanvasRenderingContext2D;
-    getFilledInPixels(4, ctx, mockCanvas(0, 0, 200, 160), { x: 10, y: 20, width: 50, height: 30 }, 2);
-  });
-
-  it('uses full buffer dimensions when no zone given at DPR=2', () => {
+  it('always reads full buffer pixels', () => {
     const ctx = {
       getImageData: (x: number, y: number, w: number, h: number) => {
         expect(x).toBe(0);
@@ -115,7 +89,21 @@ describe('getFilledInPixels', () => {
         return { data: new Uint8ClampedArray(200 * 160 * 4) };
       },
     } as unknown as CanvasRenderingContext2D;
-    getFilledInPixels(4, ctx, mockCanvas(0, 0, 200, 160), undefined, 2);
+    getFilledInPixels(4, ctx, mockCanvas(0, 0, 200, 160));
+  });
+
+  it('filters pixels by mask', () => {
+    // 4 pixels: transparent, opaque, transparent, opaque
+    const data = [0,0,0,0, 255,255,255,255, 0,0,0,0, 255,255,255,255];
+    // mask covers only first 2 pixels: 1 transparent + 1 opaque = 50%
+    const mask = [true, true, false, false];
+    expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 2), mask)).toBe(50);
+  });
+
+  it('returns 0 when mask covers no pixels', () => {
+    const data = [0,0,0,0, 0,0,0,0];
+    const mask = [false, false];
+    expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 1), mask)).toBe(0);
   });
 });
 
@@ -137,5 +125,12 @@ describe('getOpaqueIndices', () => {
   it('returns all alpha indices when all pixels are opaque', () => {
     const data = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
     expect(getOpaqueIndices(data)).toEqual([3, 7]);
+  });
+
+  it('filters by mask', () => {
+    // 3 opaque pixels, mask excludes pixel 1
+    const data = new Uint8ClampedArray([255,0,0,255, 255,0,0,255, 255,0,0,255]);
+    const mask = [true, false, true];
+    expect(getOpaqueIndices(data, mask)).toEqual([3, 11]);
   });
 });

@@ -6,8 +6,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getCoords, getFilledInPixels, getOpaqueIndices, type CustomCheckZone } from '../canvas/canvas';
+import { getCoords, getFilledInPixels, getOpaqueIndices } from '../canvas/canvas';
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
+import { buildRegionMask, buildRegionPath, type Region } from '../region/region';
 
 export type CustomBrush = {
   /** URL or base64 data URL of the brush image. */
@@ -18,7 +19,7 @@ export type CustomBrush = {
   height: number;
 };
 
-export type { CustomCheckZone };
+export type { Region };
 
 export type Props = {
   width: number;
@@ -46,11 +47,16 @@ export type Props = {
   /** Image brush — replaces the default filled circle. Use `CUSTOM_BRUSH_PRESET` as a starting point. */
   customBrush?: CustomBrush;
   /**
-   * Restricts the area used to calculate the completion percentage.
-   * Only pixels within this rectangle count toward `finishPercent`.
-   * Useful when only part of the card should trigger completion.
+   * Restricts where the user can scratch. Pixels outside the region cannot be erased.
+   * Omit to allow scratching anywhere on the card.
    */
-  customCheckZone?: CustomCheckZone;
+  scratchRegion?: Region;
+  /**
+   * Restricts the region that counts toward `finishPercent`.
+   * Only pixels within this region contribute to the completion percentage.
+   * Omit to count the entire card.
+   */
+  validationRegion?: Region;
   /** Canvas `imageSmoothingQuality` used when drawing the cover image. Defaults to `'low'`. */
   imageSmoothingQuality?: ImageSmoothingQuality;
   /**
@@ -116,7 +122,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     lockOnComplete = true,
     children,
     customBrush,
-    customCheckZone,
+    scratchRegion,
+    validationRegion,
     imageSmoothingQuality = 'low',
     scratchInterval = 50,
     ariaLabel,
@@ -136,7 +143,9 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const hasCompleted = useRef(false);
   const lastSampleTime = useRef(0);
   const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const dprRef = useRef(1);
+  const scratchMaskRef = useRef<boolean[] | null>(null);
+  const validationMaskRef = useRef<boolean[] | null>(null);
+  const scratchRegionPathRef = useRef<Path2D | null>(null);
 
   const drawCover = useCallback((ctx: CanvasRenderingContext2D) => {
     if (coverImage) {
@@ -156,7 +165,6 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     if (!canvas) return;
 
     const dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
-    dprRef.current = dpr;
 
     // Set buffer dimensions first — assigning canvas.width resets context state.
     // scale() and imageSmoothingQuality must be applied after.
@@ -186,6 +194,21 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       const brush = new Image(customBrush.width, customBrush.height);
       brush.src = customBrush.image;
       brushImageRef.current = brush;
+    }
+
+    if (scratchRegion) {
+      buildRegionMask(scratchRegion, canvas.width, canvas.height, dpr, (mask) => {
+        scratchMaskRef.current = mask;
+      });
+      if (scratchRegion.type !== 'image') {
+        scratchRegionPathRef.current = buildRegionPath(scratchRegion);
+      }
+    }
+
+    if (validationRegion) {
+      buildRegionMask(validationRegion, canvas.width, canvas.height, dpr, (mask) => {
+        validationMaskRef.current = mask;
+      });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,7 +244,14 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
     if (!options?.duration) {
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillRect(0, 0, width, height);
+      if (scratchRegionPathRef.current) {
+        ctx.save();
+        ctx.clip(scratchRegionPathRef.current);
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      } else {
+        ctx.fillRect(0, 0, width, height);
+      }
       finish();
       return;
     }
@@ -230,7 +260,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const { data } = imageData;
 
-    const opaque = getOpaqueIndices(data);
+    const opaque = getOpaqueIndices(data, scratchMaskRef.current);
     shuffleInPlace(opaque);
 
     const batchSize = Math.ceil(opaque.length / (duration / interval));
@@ -282,6 +312,12 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const distance = distanceBetween(lastPoint.current, currentPoint);
     const angle = angleBetween(lastPoint.current, currentPoint);
 
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    if (scratchRegionPathRef.current) {
+      ctx.clip(scratchRegionPathRef.current);
+    }
+
     for (let i = 0; i < distance; i++) {
       const x = lastPoint.current
         ? lastPoint.current.x + Math.sin(angle) * i
@@ -289,8 +325,6 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       const y = lastPoint.current
         ? lastPoint.current.y + Math.cos(angle) * i
         : 0;
-
-      ctx.globalCompositeOperation = 'destination-out';
 
       if (brushImageRef.current && customBrush) {
         ctx.drawImage(
@@ -307,12 +341,14 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       }
     }
 
+    ctx.restore();
+
     lastPoint.current = currentPoint;
 
     const now = Date.now();
     if (now - lastSampleTime.current >= scratchInterval) {
       lastSampleTime.current = now;
-      const filledInPercent = getFilledInPixels(32, ctx, canvas, customCheckZone, dprRef.current);
+      const filledInPercent = getFilledInPixels(32, ctx, canvas, validationMaskRef.current);
       onScratch?.(filledInPercent);
       handlePercentage(filledInPercent);
     }
