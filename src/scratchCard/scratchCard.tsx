@@ -35,6 +35,20 @@ export type Props = {
   sampleInterval?: number;
   ariaLabel?: string;
   canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
+  /**
+   * Controls the canvas buffer scaling factor.
+   *
+   * - `undefined` (default) — automatically uses `window.devicePixelRatio`. Recommended for
+   *   sharp rendering on HiDPI screens (Retina, high-density mobile). The canvas buffer is
+   *   scaled up so every physical pixel is drawn 1:1, eliminating blur.
+   *
+   * - `1` — disables automatic scaling. The buffer matches the CSS size exactly, which reduces
+   *   memory usage and speeds up pixel sampling (`getFilledInPixels`). Use this if you notice
+   *   performance issues on large canvases or low-end devices.
+   *
+   * Trade-off: `undefined` = sharper image, higher memory; `1` = lower memory, blurry on HiDPI.
+   */
+  pixelRatio?: number;
 };
 
 export type RevealAllOptions = {
@@ -75,6 +89,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     sampleInterval = 50,
     ariaLabel,
     canvasProps,
+    pixelRatio,
   } = props;
 
   const [loaded, setLoaded] = useState(false);
@@ -108,7 +123,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const dpr = window.devicePixelRatio ?? 1;
+    const dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
     dprRef.current = dpr;
 
     // Set buffer dimensions first — assigning canvas.width resets context state.

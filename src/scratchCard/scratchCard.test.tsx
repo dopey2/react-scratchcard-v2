@@ -485,5 +485,14 @@ describe('ScratchCard', () => {
       scratch(container.querySelector('canvas')!);
       expect(mockCtx.getImageData).toHaveBeenCalledWith(20, 40, 100, 60);
     });
+
+    it('pixelRatio prop overrides window.devicePixelRatio', () => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 3, configurable: true });
+      const { container } = setup({ width: 300, height: 200, pixelRatio: 1 });
+      const canvas = container.querySelector('canvas')!;
+      expect(canvas.width).toBe(300);
+      expect(canvas.height).toBe(200);
+      expect(mockCtx.scale).toHaveBeenCalledWith(1, 1);
+    });
   });
 });
