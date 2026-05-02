@@ -10,8 +10,11 @@ import { getCoords, getFilledInPixels, getOpaqueIndices, type CustomCheckZone } 
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 
 export type CustomBrush = {
+  /** URL or base64 data URL of the brush image. */
   image: string;
+  /** Brush width in pixels. */
   width: number;
+  /** Brush height in pixels. */
   height: number;
 };
 
@@ -20,21 +23,35 @@ export type { CustomCheckZone };
 export type Props = {
   width: number;
   height: number;
+  /** URL or base64 data URL of the image drawn as the scratch-off cover. */
   coverImage?: string;
+  /** Solid color cover — used when `coverImage` is not provided. Defaults to `#ccc`. */
   coverColor?: string;
+  /** Percentage of pixels that must be erased before `onComplete` fires. Defaults to `70`. */
   finishPercent?: number;
+  /** Fires when the finishPercent is reached inside the defined scratching zone */
   onComplete?: () => void;
+  /** Fires when the user stops scratching, whether `finishPercent` was reached or not. */
   onScratchEnd?: () => void;
   /**
    * Fires on each pixel sample during scratching. Throttled by `scratchInterval`.
    * @param percent - Current percentage of pixels erased (0–100).
    */
   onScratch?: (percent: number) => void;
+  /** Size of the brush circle in pixels. Ignored when `customBrush` is set. Defaults to `20`. */
   brushSize?: number;
+  /** When `true`, scratching is blocked after `finishPercent` is reached. Defaults to `true`. */
   lockOnComplete?: boolean;
   children?: React.ReactNode;
+  /** Image brush — replaces the default filled circle. Use `CUSTOM_BRUSH_PRESET` as a starting point. */
   customBrush?: CustomBrush;
+  /**
+   * Restricts the area used to calculate the completion percentage.
+   * Only pixels within this rectangle count toward `finishPercent`.
+   * Useful when only part of the card should trigger completion.
+   */
   customCheckZone?: CustomCheckZone;
+  /** Canvas `imageSmoothingQuality` used when drawing the cover image. Defaults to `'low'`. */
   imageSmoothingQuality?: ImageSmoothingQuality;
   /**
    * Minimum milliseconds between `onScratch` callbacks. Does not affect the visual scratching effect —
@@ -43,17 +60,19 @@ export type Props = {
    */
   scratchInterval?: number;
   ariaLabel?: string;
+  /** HTML attributes passed through to the underlying `<canvas>` element. */
   canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
   /**
    * Controls the canvas buffer scaling factor.
    *
-   * - `undefined` (default) — automatically uses `window.devicePixelRatio`. Recommended for
-   *   sharp rendering on HiDPI screens (Retina, high-density mobile). The canvas buffer is
-   *   scaled up so every physical pixel is drawn 1:1, eliminating blur.
+   * Set to `undefined` for better quality if performance is not an issue — automatically uses
+   * `window.devicePixelRatio` for sharp rendering on HiDPI screens (Retina, high-density mobile).
    *
-   * - `1` — disables automatic scaling. The buffer matches the CSS size exactly, which reduces
-   *   memory usage and speeds up pixel sampling (`getFilledInPixels`). Use this if you notice
-   *   performance issues on large canvases or low-end devices.
+   * - `undefined` (default) — auto-detects `window.devicePixelRatio`. The buffer is scaled up
+   *   so every physical pixel is drawn 1:1, eliminating blur. Higher memory usage.
+   *
+   * - `1` — disables automatic scaling. Buffer matches CSS size exactly. Use this if you notice
+   *   performance issues on large canvases or low-end devices. Blurry on HiDPI screens.
    *
    * Trade-off: `undefined` = sharper image, higher memory; `1` = lower memory, blurry on HiDPI.
    */
@@ -61,12 +80,16 @@ export type Props = {
 };
 
 export type RevealAllOptions = {
+  /** Animation duration in ms. Omit for an instant reveal. */
   duration?: number;
+  /** How often the reveal animation updates in ms. Defaults to `16` (~60 fps). */
   interval?: number;
 };
 
 export type ScratchCardRef = {
+  /** Restores the scratch card to its initial covered state. Allows `onComplete` to fire again. */
   reset: () => void;
+  /** Erases the remaining pixels. Pass `{ duration }` for an animated reveal. */
   revealAll: (options?: RevealAllOptions) => void;
 };
 

@@ -4,6 +4,7 @@ type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
 
+/** Rectangle (in pixels) that restricts which area counts toward the completion percentage. */
 export type CustomCheckZone = {
   x: number;
   y: number;
