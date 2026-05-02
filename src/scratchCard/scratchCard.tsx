@@ -32,6 +32,7 @@ export type Props = {
   customCheckZone?: CustomCheckZone;
   imageSmoothingQuality?: ImageSmoothingQuality;
   ariaLabel?: string;
+  canvasProps?: React.CanvasHTMLAttributes<HTMLCanvasElement>;
 };
 
 export type ScratchCardRef = {
@@ -61,6 +62,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     customCheckZone,
     imageSmoothingQuality = 'low',
     ariaLabel,
+    canvasProps,
   } = props;
 
   const [loaded, setLoaded] = useState(false);
@@ -210,17 +212,18 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   return (
     <div className='ScratchCard__Container' style={containerStyle}>
       <canvas
+        {...canvasProps}
         ref={canvasRef}
-        className='ScratchCard__Canvas'
-        style={canvasStyle}
+        className={['ScratchCard__Canvas', canvasProps?.className].filter(Boolean).join(' ')}
+        style={{ ...canvasProps?.style, ...canvasStyle }}
         width={width}
         height={height}
+        role='img'
+        aria-label={ariaLabel}
         onMouseDown={(e) => handlePointerDown(e)}
         onTouchStart={(e) => handlePointerDown(e)}
         onMouseMove={(e) => handlePointerMove(e)}
         onTouchMove={(e) => handlePointerMove(e)}
-        aria-label={ariaLabel}
-        role='img'
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
         onTouchCancel={handlePointerUp}
