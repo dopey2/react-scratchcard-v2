@@ -148,8 +148,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       if (brushImageRef.current && customBrush) {
         ctx.drawImage(
           brushImageRef.current,
-          x,
-          y,
+          x - customBrush.width / 2,
+          y - customBrush.height / 2,
           customBrush.width,
           customBrush.height
         );
