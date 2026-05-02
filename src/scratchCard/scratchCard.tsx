@@ -220,6 +220,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         onMouseMove={(e) => handlePointerMove(e)}
         onTouchMove={(e) => handlePointerMove(e)}
         aria-label={ariaLabel}
+        role='img'
         onMouseUp={handlePointerUp}
         onTouchEnd={handlePointerUp}
         onTouchCancel={handlePointerUp}
