@@ -139,9 +139,9 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const bgCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const brushImageRef = useRef<HTMLImageElement | null>(null);
-  const isDrawing = useRef(false);
-  const lastPoint = useRef<Point | null>(null);
-  const isFinished = useRef(false);
+  const isScratching = useRef(false);
+  const lastPointerPos = useRef<Point | null>(null);
+  const isScratchingLocked = useRef(false);
   const hasCompleted = useRef(false);
   const lastSampleTime = useRef(0);
   const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -268,7 +268,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
     drawCover(ctx);
     drawBgCover();
-    isFinished.current = false;
+    isScratchingLocked.current = false;
     hasCompleted.current = false;
   }, [drawCover, drawBgCover]);
 
@@ -277,13 +277,18 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       hasCompleted.current = true;
       onComplete?.();
     }
-    isFinished.current = true;
+    isScratchingLocked.current = true;
   }, [onComplete]);
 
   const revealAll = useCallback((options?: RevealAllOptions) => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
-    if (!canvas || !ctx || isFinished.current) return;
+    if (!canvas || !ctx) return;
+
+    if (revealIntervalRef.current) {
+      clearInterval(revealIntervalRef.current);
+      revealIntervalRef.current = null;
+    }
 
     if (!options?.duration) {
       ctx.globalCompositeOperation = 'destination-out';
@@ -340,27 +345,27 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     if (filledInPixels > finishPercent) {
       hasCompleted.current = true;
       onComplete?.();
-      if (lockOnComplete) isFinished.current = true;
+      if (lockOnComplete) isScratchingLocked.current = true;
     }
   };
 
   const handlePointerDown = (e: MouseOrTouchEvent) => {
     const canvas = canvasRef.current;
-    if (!canvas || isFinished.current) return;
-    isDrawing.current = true;
-    lastPoint.current = getCoords(e, canvas);
+    if (!canvas || isScratchingLocked.current) return;
+    isScratching.current = true;
+    lastPointerPos.current = getCoords(e, canvas);
   };
 
   const handlePointerMove = (e: MouseOrTouchEvent) => {
-    if (!isDrawing.current || isFinished.current) return;
+    if (!isScratching.current || isScratchingLocked.current) return;
 
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
     if (!canvas || !ctx) return;
 
     const currentPoint = getCoords(e, canvas);
-    const distance = distanceBetween(lastPoint.current, currentPoint);
-    const angle = angleBetween(lastPoint.current, currentPoint);
+    const distance = distanceBetween(lastPointerPos.current, currentPoint);
+    const angle = angleBetween(lastPointerPos.current, currentPoint);
 
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
@@ -369,11 +374,11 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     }
 
     for (let i = 0; i < distance; i++) {
-      const x = lastPoint.current
-        ? lastPoint.current.x + Math.sin(angle) * i
+      const x = lastPointerPos.current
+        ? lastPointerPos.current.x + Math.sin(angle) * i
         : 0;
-      const y = lastPoint.current
-        ? lastPoint.current.y + Math.cos(angle) * i
+      const y = lastPointerPos.current
+        ? lastPointerPos.current.y + Math.cos(angle) * i
         : 0;
 
       if (brushImageRef.current && customBrush) {
@@ -393,7 +398,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
 
     ctx.restore();
 
-    lastPoint.current = currentPoint;
+    lastPointerPos.current = currentPoint;
 
     const now = Date.now();
     if (now - lastSampleTime.current >= scratchInterval) {
@@ -405,8 +410,8 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   };
 
   const handlePointerUp = useCallback(() => {
-    if (!isDrawing.current) return;
-    isDrawing.current = false;
+    if (!isScratching.current) return;
+    isScratching.current = false;
     onScratchEnd?.();
   }, [onScratchEnd]);
 
