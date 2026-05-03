@@ -90,6 +90,12 @@ export type RevealAllOptions = {
   duration?: number;
   /** How often the reveal animation updates in ms. Defaults to `16` (~60 fps). */
   interval?: number;
+  /**
+   * Erases pixels in N×N blocks. Each randomly selected pixel acts as the top-left
+   * corner of a block — right, bottom, and bottom-right neighbors are erased together.
+   * Defaults to `1` (individual pixels).
+   */
+  blockSize?: number;
 };
 
 export type ScratchCardRef = {
@@ -290,6 +296,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       revealIntervalRef.current = null;
     }
 
+    // instant clear, no animations
     if (!options?.duration) {
       ctx.globalCompositeOperation = 'destination-out';
       if (scratchRegionPathRef.current) {
@@ -311,9 +318,11 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       return;
     }
 
-    const { duration, interval = 16 } = options;
+    const { duration, interval = 16, blockSize = 1 } = options;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const { data } = imageData;
+    const bufferWidth = canvas.width;
+    const bufferHeight = canvas.height;
 
     const opaque = getOpaqueIndices(data, scratchMaskRef.current);
     shuffleInPlace(opaque);
@@ -324,7 +333,17 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     revealIntervalRef.current = setInterval(() => {
       const end = Math.min(offset + batchSize, opaque.length);
       for (let i = offset; i < end; i++) {
-        data[opaque[i]] = 0;
+        const alphaIdx = opaque[i];
+        const pixelIdx = (alphaIdx - 3) / 4;
+        const ax = pixelIdx % bufferWidth;
+        const ay = Math.floor(pixelIdx / bufferWidth);
+        for (let dy = 0; dy < blockSize; dy++) {
+          for (let dx = 0; dx < blockSize; dx++) {
+            if (ax + dx < bufferWidth && ay + dy < bufferHeight) {
+              data[alphaIdx + (dy * bufferWidth + dx) * 4] = 0;
+            }
+          }
+        }
       }
       ctx.putImageData(imageData, 0, 0);
       offset = end;
