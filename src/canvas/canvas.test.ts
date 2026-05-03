@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getCoords, getFilledInPixels, getOpaqueIndices } from './canvas';
+import { getBlockOriginIndices, getCoords, getFilledInPixels } from './canvas';
 
 const mockCanvas = (top = 0, left = 0, width = 100, height = 100) =>
   ({
@@ -107,30 +107,33 @@ describe('getFilledInPixels', () => {
   });
 });
 
-describe('getOpaqueIndices', () => {
-  it('returns alpha indices of opaque pixels', () => {
-    const data = new Uint8ClampedArray([
-      255, 0, 0, 255,  // opaque — alpha index 3
-      0, 0, 0, 0,      // transparent — skipped
-      0, 255, 0, 128,  // semi-transparent — alpha index 11
-    ]);
-    expect(getOpaqueIndices(data)).toEqual([3, 11]);
+describe('getBlockOriginIndices', () => {
+  it('returns one alpha index per pixel when blockSize=1', () => {
+    // 2x2 buffer, blockSize=1 → origins at (0,0),(1,0),(0,1),(1,1) → alpha indices 3,7,11,15
+    expect(getBlockOriginIndices(2, 2, 1)).toEqual([3, 7, 11, 15]);
   });
 
-  it('returns empty array when all pixels are transparent', () => {
-    const data = new Uint8ClampedArray([0, 0, 0, 0, 0, 0, 0, 0]);
-    expect(getOpaqueIndices(data)).toEqual([]);
+  it('returns one alpha index per block when blockSize=2', () => {
+    // 4x4 buffer, blockSize=2 → origins at (0,0),(2,0),(0,2),(2,2)
+    // pixelIdx: 0, 2, 8, 10 → alpha indices: 3, 11, 35, 43
+    expect(getBlockOriginIndices(4, 4, 2)).toEqual([3, 11, 35, 43]);
   });
 
-  it('returns all alpha indices when all pixels are opaque', () => {
-    const data = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
-    expect(getOpaqueIndices(data)).toEqual([3, 7]);
+  it('filters block origins by mask', () => {
+    // 2x2 buffer, blockSize=1, mask excludes pixel 1 (index 1)
+    const mask = [true, false, true, true];
+    expect(getBlockOriginIndices(2, 2, 1, mask)).toEqual([3, 11, 15]);
   });
 
-  it('filters by mask', () => {
-    // 3 opaque pixels, mask excludes pixel 1
-    const data = new Uint8ClampedArray([255,0,0,255, 255,0,0,255, 255,0,0,255]);
-    const mask = [true, false, true];
-    expect(getOpaqueIndices(data, mask)).toEqual([3, 11]);
+  it('returns empty array when mask excludes all origins', () => {
+    const mask = [false, false, false, false];
+    expect(getBlockOriginIndices(2, 2, 1, mask)).toEqual([]);
+  });
+
+  it('entry count is DPR-scale-invariant for equivalent CSS canvas sizes', () => {
+    // CSS 4×2 at DPR=1: buffer 4×2, step=1 → 8 entries
+    expect(getBlockOriginIndices(4, 2, 1).length).toBe(8);
+    // CSS 4×2 at DPR=2: buffer 8×4, step=2 → still 8 entries
+    expect(getBlockOriginIndices(8, 4, 2).length).toBe(8);
   });
 });

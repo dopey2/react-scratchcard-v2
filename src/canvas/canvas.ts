@@ -25,11 +25,19 @@ export const getCoords = (
   };
 };
 
-export const getOpaqueIndices = (data: Uint8ClampedArray, mask?: boolean[] | null): number[] => {
+export const getBlockOriginIndices = (
+  bufferWidth: number,
+  bufferHeight: number,
+  blockSize: number,
+  mask?: boolean[] | null
+): number[] => {
   const indices: number[] = [];
-  for (let i = 3; i < data.length; i += 4) {
-    if (mask && !mask[(i - 3) / 4]) continue;
-    if (data[i] > 0) indices.push(i);
+  for (let by = 0; by < bufferHeight; by += blockSize) {
+    for (let bx = 0; bx < bufferWidth; bx += blockSize) {
+      const pixelIdx = by * bufferWidth + bx;
+      if (mask && !mask[pixelIdx]) continue;
+      indices.push(pixelIdx * 4 + 3);
+    }
   }
   return indices;
 };

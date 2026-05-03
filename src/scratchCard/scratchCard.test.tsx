@@ -341,6 +341,37 @@ describe('ScratchCard', () => {
         (HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>).mockReturnValue(mockCtx);
       });
 
+      it('zeroes pixel alpha in imageData by end of duration', () => {
+        // verify the erase mechanism actually modifies the buffer, not just that onComplete fires
+        const pixelData = new Uint8ClampedArray([255, 255, 255, 255]);
+        mockCtx.getImageData.mockReturnValue({ data: pixelData });
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, width: 1, height: 1 });
+        act(() => { ref.current?.revealAll({ duration: 100 }); });
+        act(() => { vi.runAllTimers(); });
+        expect(pixelData[3]).toBe(0);
+      });
+
+      it('at DPR=2, uses DPR as entry step not bufferBlockSize — erases pixels before full duration', () => {
+        Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+        // CSS 2×1, DPR=2 → buffer 4×2 (8 pixels)
+        // blockSize=2 → bufferBlockSize=round(2×2)=4, entryStep=round(2)=2
+        // fix   (step=2): getBlockOriginIndices(4,2,2) → 2 entries → targetIdx=1 when progress≥0.5 (t≥64ms)
+        // regress(step=4): getBlockOriginIndices(4,2,4) → 1 entry  → targetIdx=0 until progress≥1.0 (t=100ms)
+        const pixelData = new Uint8ClampedArray(4 * 2 * 4).fill(255);
+        mockCtx.getImageData.mockReturnValue({ data: pixelData });
+        const ref = createRef<ScratchCardRef>();
+        setup({ ref, width: 2, height: 1 });
+        act(() => { ref.current?.revealAll({ duration: 100, blockSize: 2 }); });
+        act(() => { vi.advanceTimersByTime(64); }); // progress=0.64: fix→1 entry, regression→0 entries
+        let zeroedAlpha = 0;
+        for (let i = 3; i < pixelData.length; i += 4) {
+          if (pixelData[i] === 0) zeroedAlpha++;
+        }
+        expect(zeroedAlpha).toBeGreaterThan(0);
+        Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+      });
+
       it('cancels animation and does not call onComplete when reset mid-animation', () => {
         const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
         mockCtx.getImageData.mockReturnValue({ data: opaqueData });
@@ -353,7 +384,7 @@ describe('ScratchCard', () => {
         expect(onComplete).not.toHaveBeenCalled();
       });
 
-      it('skips animation when all pixels are already transparent', () => {
+      it('calls onComplete even when all pixels are already transparent', () => {
         mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray([255, 255, 255, 0]) });
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();

@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getCoords, getFilledInPixels, getOpaqueIndices } from '../canvas/canvas';
+import { getBlockOriginIndices, getCoords, getFilledInPixels } from '../canvas/canvas';
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 import { buildRegionMask, buildRegionPath, type Region } from '../region/region';
 
@@ -105,6 +105,7 @@ export type ScratchCardRef = {
   revealAll: (options?: RevealAllOptions) => void;
 };
 
+
 type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
@@ -151,6 +152,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
   const hasCompleted = useRef(false);
   const lastSampleTime = useRef(0);
   const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dprRef = useRef(1);
   const scratchMaskRef = useRef<boolean[] | null>(null);
   const validationMaskRef = useRef<boolean[] | null>(null);
   const scratchRegionPathRef = useRef<Path2D | null>(null);
@@ -198,15 +200,15 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
+    dprRef.current = pixelRatio ?? window.devicePixelRatio ?? 1;
 
     // Set buffer dimensions first — assigning canvas.width resets context state.
     // scale() and imageSmoothingQuality must be applied after.
     ctxRef.current = canvas.getContext('2d', { willReadFrequently: true });
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
+    canvas.width = Math.floor(width * dprRef.current);
+    canvas.height = Math.floor(height * dprRef.current);
     if (ctxRef.current) {
-      ctxRef.current.scale(dpr, dpr);
+      ctxRef.current.scale(dprRef.current, dprRef.current);
       ctxRef.current.imageSmoothingQuality = imageSmoothingQuality;
     }
 
@@ -234,10 +236,10 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
       const bgCanvas = bgCanvasRef.current;
       if (bgCanvas) {
         bgCtxRef.current = bgCanvas.getContext('2d');
-        bgCanvas.width = Math.floor(width * dpr);
-        bgCanvas.height = Math.floor(height * dpr);
+        bgCanvas.width = Math.floor(width * dprRef.current);
+        bgCanvas.height = Math.floor(height * dprRef.current);
         if (bgCtxRef.current) {
-          bgCtxRef.current.scale(dpr, dpr);
+          bgCtxRef.current.scale(dprRef.current, dprRef.current);
           bgCtxRef.current.imageSmoothingQuality = imageSmoothingQuality;
         }
       }
@@ -247,14 +249,14 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
         scratchRegionPathRef.current = buildRegionPath(scratchRegion);
       }
 
-      buildRegionMask(scratchRegion, canvas.width, canvas.height, dpr, (mask) => {
+      buildRegionMask(scratchRegion, canvas.width, canvas.height, dprRef.current, (mask) => {
         scratchMaskRef.current = mask;
         drawBgCover();
       });
     }
 
     if (validationRegion) {
-      buildRegionMask(validationRegion, canvas.width, canvas.height, dpr, (mask) => {
+      buildRegionMask(validationRegion, canvas.width, canvas.height, dprRef.current, (mask) => {
         validationMaskRef.current = mask;
       });
     }
@@ -323,32 +325,37 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     const { data } = imageData;
     const bufferWidth = canvas.width;
     const bufferHeight = canvas.height;
+    const bufferBlockSize = Math.max(1, Math.round(blockSize * dprRef.current));
+    const entryStep = Math.max(1, Math.round(dprRef.current));
 
-    const opaque = getOpaqueIndices(data, scratchMaskRef.current);
+    const opaque = getBlockOriginIndices(bufferWidth, bufferHeight, entryStep, scratchMaskRef.current);
     shuffleInPlace(opaque);
 
-    const batchSize = Math.ceil(opaque.length / (duration / interval));
+    const startTime = Date.now();
     let offset = 0;
 
     revealIntervalRef.current = setInterval(() => {
-      const end = Math.min(offset + batchSize, opaque.length);
-      for (let i = offset; i < end; i++) {
-        const alphaIdx = opaque[i];
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const targetIdx = Math.floor(progress * opaque.length);
+
+      while (offset < targetIdx) {
+        const alphaIdx = opaque[offset];
         const pixelIdx = (alphaIdx - 3) / 4;
         const ax = pixelIdx % bufferWidth;
         const ay = Math.floor(pixelIdx / bufferWidth);
-        for (let dy = 0; dy < blockSize; dy++) {
-          for (let dx = 0; dx < blockSize; dx++) {
+        for (let dy = 0; dy < bufferBlockSize; dy++) {
+          for (let dx = 0; dx < bufferBlockSize; dx++) {
             if (ax + dx < bufferWidth && ay + dy < bufferHeight) {
               data[alphaIdx + (dy * bufferWidth + dx) * 4] = 0;
             }
           }
         }
+        offset++;
       }
       ctx.putImageData(imageData, 0, 0);
-      offset = end;
 
-      if (offset >= opaque.length) {
+      if (progress >= 1) {
         clearInterval(revealIntervalRef.current!);
         revealIntervalRef.current = null;
         finish();
