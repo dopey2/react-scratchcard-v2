@@ -5,6 +5,8 @@ import BrushSize from '../examples/brush/BrushSize';
 import CustomBrush from '../examples/brush/CustomBrush';
 import LockOnComplete from '../examples/onComplete/LockOnComplete';
 import ContinueOnComplete from '../examples/onComplete/ContinueOnComplete';
+import CircleScratchRegion from '../examples/region/CircleScratchRegion';
+import ImageMaskRegion from '../examples/region/ImageMaskRegion';
 import FadeOut from '../examples/onComplete/FadeOut';
 import BlurOut from '../examples/onComplete/BlurOut';
 import AnimatedReveal from '../examples/onComplete/AnimatedReveal';
@@ -44,7 +46,9 @@ export default function BasicDemo() {
       </Section>
 
       <Section title="Scratch Zone">
-        <p style={{ color: '#555', fontSize: '0.85rem', padding: '1.5rem 0' }}>Coming soon.</p>
+        <CircleScratchRegion />
+        <Divider />
+        <ImageMaskRegion />
       </Section>
 
     </div>

@@ -15,7 +15,7 @@ export default function ImageCover() {
       controls={
         <>
           <button onClick={() => { ref.current?.reset(); setComplete(false); }}>Reset</button>
-          <button onClick={() => ref.current?.revealAll()}>Reveal All</button>
+          <button onClick={() => ref.current?.revealAll({ blockSize: 4 })}>Reveal All</button>
         </>
       }
     >

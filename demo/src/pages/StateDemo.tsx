@@ -89,8 +89,8 @@ export default function StateDemo() {
           setIsComplete(false);
           setLastRelease(null);
         }}>Reset</button>
-        <button onClick={() => cardRef.current?.revealAll()}>Reveal All</button>
-        <button onClick={() => cardRef.current?.revealAll({ duration: 1500 })}>Reveal (animated)</button>
+        <button onClick={() => cardRef.current?.revealAll({ blockSize: 4 })}>Reveal All</button>
+        <button onClick={() => cardRef.current?.revealAll({ duration: 1500, blockSize: 4 })}>Reveal (animated)</button>
       </div>
 
       <div

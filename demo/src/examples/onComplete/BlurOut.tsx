@@ -14,7 +14,7 @@ export default function BlurOut() {
       controls={
         <>
           <button onClick={() => { ref.current?.reset(); setComplete(false); }}>Reset</button>
-          <button onClick={() => { ref.current?.revealAll(); setComplete(true); }}>Reveal All</button>
+          <button onClick={() => { ref.current?.revealAll({ blockSize: 4 }); setComplete(true); }}>Reveal All</button>
         </>
       }
     >

@@ -8,7 +8,7 @@ export default function BlurAnimatedReveal() {
 
   const trigger = () => {
     setComplete(true);
-    ref.current?.revealAll({ duration: 1200 });
+    ref.current?.revealAll({ duration: 1200, blockSize: 4 });
   };
 
   return (

@@ -14,7 +14,7 @@ export default function AnimatedReveal() {
       controls={
         <>
           <button onClick={() => { ref.current?.reset(); setComplete(false); }}>Reset</button>
-          <button onClick={() => ref.current?.revealAll({ duration: 1200 })}>Reveal All</button>
+          <button onClick={() => ref.current?.revealAll({ duration: 1200, blockSize: 4 })}>Reveal All</button>
         </>
       }
     >
@@ -24,7 +24,7 @@ export default function AnimatedReveal() {
         height={226}
         coverColor="#0ea5e9"
         finishPercent={70}
-        onComplete={() => { setComplete(true); ref.current?.revealAll({ duration: 1200 }); }}
+        onComplete={() => { setComplete(true); ref.current?.revealAll({ duration: 1200, blockSize: 4 }); }}
       >
         <Result />
       </ScratchCard>
