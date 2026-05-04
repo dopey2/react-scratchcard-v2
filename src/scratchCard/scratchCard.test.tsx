@@ -185,6 +185,45 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('onScratch callback arguments', () => {
+    it('passes percent as first argument', () => {
+      const onScratch = vi.fn();
+      const { container } = setup({ scratchInterval: 0, onScratch });
+      scratch(container.querySelector('canvas')!);
+      expect(typeof onScratch.mock.calls[0][0]).toBe('number');
+    });
+
+    it('passes canvas-relative lastPosition as second argument', () => {
+      const onScratch = vi.fn();
+      const { container } = setup({ scratchInterval: 0, onScratch });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 50, clientY: 60 });
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 120 });
+      const lastPosition = onScratch.mock.calls[0][1];
+      expect(lastPosition).toEqual({ x: 100, y: 120 });
+    });
+
+    it('passes viewport globalPosition as third argument matching event clientX/clientY', () => {
+      const onScratch = vi.fn();
+      const { container } = setup({ scratchInterval: 0, onScratch });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 50, clientY: 60 });
+      fireEvent.mouseMove(canvas, { clientX: 100, clientY: 120 });
+      const globalPosition = onScratch.mock.calls[0][2];
+      expect(globalPosition).toEqual({ x: 100, y: 120 });
+    });
+
+    it('passes touch clientX/clientY as globalPosition', () => {
+      const onScratch = vi.fn();
+      const { container } = setup({ scratchInterval: 0, onScratch });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.touchStart(canvas, { touches: [{ clientX: 50, clientY: 60 }] });
+      fireEvent.touchMove(canvas, { touches: [{ clientX: 100, clientY: 120 }] });
+      const globalPosition = onScratch.mock.calls[0][2];
+      expect(globalPosition).toEqual({ x: 100, y: 120 });
+    });
+  });
+
   describe('completion', () => {
     beforeEach(() => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });

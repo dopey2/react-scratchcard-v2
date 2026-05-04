@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getBlockOriginIndices, getCoords, getFilledInPixels } from '../canvas/canvas';
+import { getBlockOriginIndices, getCoords, getFilledInPixels, getGlobalCoords } from '../canvas/canvas';
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 import { buildRegionMask, buildRegionPath, type Region } from '../region/region';
 
@@ -37,8 +37,10 @@ export type Props = {
   /**
    * Fires on each pixel sample during scratching. Throttled by `scratchInterval`.
    * @param percent - Current percentage of pixels erased (0–100).
+   * @param lastPosition - Canvas coordinates of the last pointer position.
+   * @param globalPosition - Viewport (client) coordinates of the pointer.
    */
-  onScratch?: (percent: number) => void;
+  onScratch?: (percent: number, lastPosition: Point, globalPosition: Point) => void;
   /** Size of the brush circle in pixels. Ignored when `customBrush` is set. Defaults to `20`. */
   brushSize?: number;
   /** When `true`, scratching is blocked after `finishPercent` is reached. Defaults to `true`. */
@@ -430,7 +432,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(function ScratchCard(
     if (now - lastSampleTime.current >= scratchInterval) {
       lastSampleTime.current = now;
       const filledInPercent = getFilledInPixels(32, ctx, canvas, validationMaskRef.current ?? scratchMaskRef.current);
-      onScratch?.(filledInPercent);
+      onScratch?.(filledInPercent, currentPoint, getGlobalCoords(e));
       handlePercentage(filledInPercent);
     }
   };

@@ -4,6 +4,13 @@ type MouseOrTouchEvent =
   | React.MouseEvent<HTMLCanvasElement>
   | React.TouchEvent<HTMLCanvasElement>;
 
+export const getGlobalCoords = (e: MouseOrTouchEvent): Point => {
+  if ('touches' in e) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+};
+
 export const getCoords = (
   e: MouseOrTouchEvent,
   canvas: HTMLCanvasElement
