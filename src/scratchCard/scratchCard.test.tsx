@@ -56,6 +56,8 @@ const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) =>
   );
 };
 
+const waitForInit = () => act(async () => {});
+
 const scratch = (canvas: Element, from = { x: 50, y: 50 }, to = { x: 100, y: 100 }) => {
   fireEvent.mouseDown(canvas, { clientX: from.x, clientY: from.y });
   fireEvent.mouseMove(canvas, { clientX: to.x, clientY: to.y });
@@ -88,8 +90,9 @@ describe('ScratchCard', () => {
       expect(div.style.height).toBe('300px');
     });
 
-    it('shows result div after image loads', () => {
+    it('shows result div after image loads', async () => {
       const { container } = setup();
+      await waitForInit();
       const result = container.querySelector('.ScratchCard__Result') as HTMLElement;
       expect(result.style.visibility).toBe('visible');
     });
@@ -596,9 +599,10 @@ describe('background canvas', () => {
     expect(Number(main.style.zIndex)).toBeGreaterThan(Number(bg.style.zIndex));
   });
 
-  it('erases the scratch region interior on mount using destination-out', () => {
+  it('erases the scratch region interior on mount using destination-out', async () => {
     mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(300 * 200 * 4).fill(255) });
     setup({ coverColor: '#f00', scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    await waitForInit();
     const ops = mockCtx.fillRect.mock.calls;
     // at least two fillRect calls: one for main cover, one for bg cover, one for destination-out erase
     expect(ops.length).toBeGreaterThanOrEqual(3);

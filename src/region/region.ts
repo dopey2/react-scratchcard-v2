@@ -19,20 +19,29 @@ export type ImageRegion = {
   image: string;
 };
 
+// internal type only
+type ImageRegionResolved = {
+  type: 'image';
+  image: HTMLImageElement;
+};
+
+// external type used as props
 export type Region = RectRegion | CircleRegion | ImageRegion;
+
+// internal type
+type RegionResolved = RectRegion | CircleRegion | ImageRegionResolved
 
 /**
  * Builds a flat boolean mask covering the full canvas buffer.
  * `mask[pixelIndex] === true` means the pixel is inside the region.
- * Fires `onReady` synchronously for rect/circle, asynchronously for image.
  */
 export const buildRegionMask = (
-  region: Region,
+  region: RegionResolved,
   bufferWidth: number,
   bufferHeight: number,
   dpr: number,
-  onReady: (mask: boolean[]) => void
-): void => {
+  message: string
+): boolean[] => {
   if (region.type === 'rect') {
     const x0 = Math.floor(region.x * dpr);
     const y0 = Math.floor(region.y * dpr);
@@ -44,10 +53,11 @@ export const buildRegionMask = (
         mask[y * bufferWidth + x] = true;
       }
     }
-    onReady(mask);
-    return;
+
+    return mask;
   }
 
+  // Circle region mask
   if (region.type === 'circle') {
     const cx = region.x * dpr;
     const cy = region.y * dpr;
@@ -63,27 +73,23 @@ export const buildRegionMask = (
         }
       }
     }
-    onReady(mask);
-    return;
+
+    return mask;
   }
 
-  const img = new Image();
-  img.crossOrigin = 'Anonymous';
-  img.onload = () => {
-    const offscreen = document.createElement('canvas');
-    offscreen.width = bufferWidth;
-    offscreen.height = bufferHeight;
-    const ctx = offscreen.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(img, 0, 0, bufferWidth, bufferHeight);
-    const { data } = ctx.getImageData(0, 0, bufferWidth, bufferHeight);
-    const mask = new Array<boolean>(bufferWidth * bufferHeight);
-    for (let i = 0; i < mask.length; i++) {
-      mask[i] = data[i * 4 + 3] > 0;
-    }
-    onReady(mask);
-  };
-  img.src = region.image;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = bufferWidth;
+  offscreen.height = bufferHeight;
+  const ctx = offscreen.getContext('2d');
+  if (!ctx) throw new Error(`${message}: Failed to get 2D context for region mask`);;
+  ctx.drawImage(region.image, 0, 0, bufferWidth, bufferHeight);
+  const { data } = ctx.getImageData(0, 0, bufferWidth, bufferHeight);
+  const mask = new Array<boolean>(bufferWidth * bufferHeight);
+  for (let i = 0; i < mask.length; i++) {
+    mask[i] = data[i * 4 + 3] > 0;
+  }
+
+  return mask
 };
 
 /**
