@@ -1,0 +1,8 @@
+@keyframes particle-x {
+  to { transform: translateX(var(--dx)); }
+}
+
+@keyframes particle-y {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(var(--dy)); opacity: 0; }
+}

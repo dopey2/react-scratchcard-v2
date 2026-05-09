@@ -1,6 +1,7 @@
 import { Section, Divider } from '../examples/shared';
 import ImageCover from '../examples/basic/ImageCover';
 import ColorCover from '../examples/basic/ColorCover';
+import ParticleDemo from '../examples/particles/ParticleDemo';
 import BrushSize from '../examples/brush/BrushSize';
 import CustomBrush from '../examples/brush/CustomBrush';
 import LockOnComplete from '../examples/onComplete/LockOnComplete';
@@ -49,6 +50,10 @@ export default function BasicDemo() {
         <CircleScratchRegion />
         <Divider />
         <ImageMaskRegion />
+      </Section>
+
+      <Section title="Particles">
+        <ParticleDemo />
       </Section>
 
     </div>

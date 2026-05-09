@@ -9,7 +9,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "react-scratchcard-v2": ["../src/index.ts"]
+    }
   },
   "include": ["src"]
 }
