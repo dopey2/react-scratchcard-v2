@@ -67,6 +67,7 @@ export class Controller {
   private _isScratching = false;
   private _isScratchingLocked = false;
   private _isComplete = false;
+  private _isAllRevealed = false;
   private lastPointerPos: Point | null = null;
   private lastSampleTime = 0;
   private revealInterval: ReturnType<typeof setInterval> | null = null;
@@ -291,16 +292,13 @@ export class Controller {
     this.drawBgCover();
     this._isScratchingLocked = false;
     this._isComplete = false;
+    this._isAllRevealed = false;
   }
 
   revealAll(options?: RevealAllOptions, onFinish?: () => void): void {
     if (!this.ctx || !this.config) return;
+    if (this._isAllRevealed || this.revealInterval) return;
     const { width, height } = this.config;
-
-    if (this.revealInterval) {
-      clearInterval(this.revealInterval);
-      this.revealInterval = null;
-    }
 
     if (!options?.duration) {
       this.ctx.globalCompositeOperation = 'destination-out';
@@ -321,6 +319,7 @@ export class Controller {
       }
       this._isComplete = true;
       this._isScratchingLocked = true;
+      this._isAllRevealed = true;
       onFinish?.();
       return;
     }
@@ -366,6 +365,7 @@ export class Controller {
         this.revealInterval = null;
         this._isComplete = true;
         this._isScratchingLocked = true;
+        this._isAllRevealed = true;
         onFinish?.();
       }
     }, interval);
