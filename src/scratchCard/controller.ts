@@ -139,7 +139,7 @@ export class Controller {
 
     this.dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
 
-    // 1) Setup main canvas & the cloned canvas
+    // 1) Setup main canvas & the clone canvas
     const commonConfig = { width, height, dpr: this.dpr, imageSmoothingQuality };
     this.ctx = this.setupCanvas(this.canvas, { ...commonConfig, willReadFrequently: true });
     this.bgCtx = this.bgCanvas ? this.setupCanvas(this.bgCanvas, { ...commonConfig, willReadFrequently: false }) : null;
