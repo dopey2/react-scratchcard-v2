@@ -7,7 +7,7 @@ export default function CircleScratchRegion() {
   const [complete, setComplete] = useState(false);
 
   const handleComplete = () => {
-    ref.current?.revealAll({ duration: 500, blockSize: 4 });
+    ref.current?.revealAll({ duration: 1000, blockSize: 4 });
     setComplete(true);
   };
 

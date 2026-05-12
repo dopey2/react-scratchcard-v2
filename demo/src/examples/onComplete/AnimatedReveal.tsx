@@ -14,7 +14,7 @@ export default function AnimatedReveal() {
       controls={
         <>
           <button onClick={() => { ref.current?.reset(); setComplete(false); }}>Reset</button>
-          <button onClick={() => ref.current?.revealAll({ duration: 1200, blockSize: 4 })}>Reveal All</button>
+          <button onClick={() => ref.current?.revealAll({ duration: 3000, blockSize: 4 })}>Reveal All</button>
         </>
       }
     >

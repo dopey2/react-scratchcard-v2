@@ -9,7 +9,7 @@ export default function ImageMaskRegion() {
   const [complete, setComplete] = useState(false);
 
   const handleComplete = () => {
-    ref.current?.revealAll({ duration: 800, blockSize: 4 });
+    ref.current?.revealAll({ duration: 800,  blockSize: 4 });
     setComplete(true);
   };
 
