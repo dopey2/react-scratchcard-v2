@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { CUSTOM_BRUSH_PRESET, type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
+import {CUSTOM_BRUSH_PRESET} from "./customBrushImage";
 
 export default function CustomBrush() {
   const ref = useRef<ScratchCardRef>(null);

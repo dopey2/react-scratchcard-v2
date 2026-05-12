@@ -1,4 +1,4 @@
-import type { CustomBrush } from "./scratchCard";
+import type { CustomBrush } from "react-scratchcard-v2";
 
 export const CUSTOM_BRUSH_PRESET: CustomBrush = {
   image:
