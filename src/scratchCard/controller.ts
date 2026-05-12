@@ -92,7 +92,7 @@ export class Controller {
         resolve(img)
       }
       img.onerror = () => {
-        reject(`${message}: Failed to load image: ${image}`)
+        reject(new Error(`${message}: Failed to load image: ${image}`))
       }
       img.src = image;
     });
