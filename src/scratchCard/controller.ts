@@ -121,32 +121,31 @@ export class Controller {
     this.validRegionImage = validRegion;
   }
 
+  setupCanvas(canvas: HTMLCanvasElement, config: {width: number, height: number, dpr: number, imageSmoothingQuality: ImageSmoothingQuality, willReadFrequently: boolean}) {
+    const ctx = canvas.getContext('2d', { willReadFrequently: config.willReadFrequently });
+    canvas.width = Math.floor(config.width * config.dpr);
+    canvas.height = Math.floor(config.height * config.dpr);
+    if (ctx) {
+      ctx.scale(this.dpr, this.dpr);
+      ctx.imageSmoothingQuality = config.imageSmoothingQuality;
+    }
+
+    return ctx;
+  }
+
   async init(config: ControllerConfig): Promise<void> {
     this.config = config;
     const { width, height, pixelRatio, imageSmoothingQuality, coverImage, customBrush, scratchRegion, validationRegion } = config;
 
     this.dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
 
-    // 1.0) Setup main canvas
-    this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
-    this.canvas.width = Math.floor(width * this.dpr);
-    this.canvas.height = Math.floor(height * this.dpr);
-    if (this.ctx) {
-      this.ctx.scale(this.dpr, this.dpr);
-      this.ctx.imageSmoothingQuality = imageSmoothingQuality;
-    }
+    // 1) Setup main canvas & the cloned canvas
+    const commonConfig = { width, height, dpr: this.dpr, imageSmoothingQuality };
+    this.ctx = this.setupCanvas(this.canvas, { ...commonConfig, willReadFrequently: true });
+    this.bgCtx = this.bgCanvas ? this.setupCanvas(this.bgCanvas, { ...commonConfig, willReadFrequently: false }) : null;
 
-    // 1.1) Setup clone canvas
-    if (this.bgCanvas) {
-      this.bgCtx = this.bgCanvas.getContext('2d');
-      this.bgCanvas.width = Math.floor(width * this.dpr);
-      this.bgCanvas.height = Math.floor(height * this.dpr);
-      if (this.bgCtx) {
-        this.bgCtx.scale(this.dpr, this.dpr);
-        this.bgCtx.imageSmoothingQuality = imageSmoothingQuality;
-      }
-    }
-
+    if (!this.ctx) throw new Error("ScratchCard:: Failed to get 2d context for main canvas");
+    if (this.bgCanvas && !this.bgCtx) throw new Error("ScratchCard:: Failed to get 2d context for bg canvas");
 
     // 2) Load images assets
     const scratchRegionImageToLoad = scratchRegion?.type === 'image' ? scratchRegion.image : undefined;
@@ -160,6 +159,7 @@ export class Controller {
     });
 
 
+    // 3) Create scratch region
     if (scratchRegion && scratchRegion.type !== 'image') {
       this.scratchRegionPath = buildRegionPath(scratchRegion);
       this.scratchMask = buildRegionMask(scratchRegion, this.canvas.width, this.canvas.height, this.dpr, "ScratchRegion");
@@ -172,6 +172,7 @@ export class Controller {
       );
     }
 
+    // 4) Create validation region
     if (validationRegion && validationRegion.type !== 'image') {
       this.validationMask = buildRegionMask(validationRegion, this.canvas.width, this.canvas.height, this.dpr, "ValidationRegion");
     }
@@ -183,6 +184,7 @@ export class Controller {
       );
     }
 
+    // 5) Draw the cover & the clone canvas cover
     if (this.ctx) this.drawCover(this.ctx);
     if (scratchRegion) this.drawBgCover();
   }
