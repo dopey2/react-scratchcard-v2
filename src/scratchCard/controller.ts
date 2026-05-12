@@ -83,7 +83,6 @@ export class Controller {
   get isScratchingLocked() { return this._isScratchingLocked; }
   get isComplete() { return this._isComplete; }
 
-
   loadImageAsync(image: string, message: string): Promise<HTMLImageElement | null> {
      return new Promise((resolve, reject) => {
       const img = new Image();

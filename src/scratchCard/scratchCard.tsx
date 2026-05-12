@@ -136,6 +136,7 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(
 
         useEffect(() => {
             if (!canvasRef.current) return;
+            let isMounted = true;
 
             controllerRef.current = new Controller({
                 canvas: canvasRef.current,
@@ -157,14 +158,19 @@ const ScratchCard = forwardRef<ScratchCardRef, Props>(
                 finishPercent,
                 lockOnComplete,
             }).then(() => {
+                if(!isMounted) return;
                 setLoaded(true);
                 onReady?.();
             }).catch((err) => {
+                if(!isMounted) return;
                 const _err = err instanceof Error ? err : new Error(String(err))
                 onError?.(_err)
             });
 
-            return () => controllerRef?.current?.dispose();
+            return () => {
+                isMounted = false;
+                controllerRef.current?.dispose()
+            };
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
