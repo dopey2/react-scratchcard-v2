@@ -14,8 +14,6 @@ export type CustomBrush = {
 export type RevealAllOptions = {
   /** Animation duration in ms. Omit for an instant reveal. */
   duration?: number;
-  /** How often the reveal animation updates in ms. Defaults to `16` (~60 fps). */
-  interval?: number;
   /**
    * Erases pixels in N×N blocks. Defaults to `1` (individual pixels).
    */
@@ -71,7 +69,7 @@ export class Controller {
   private _isAllRevealed = false;
   private lastPointerPos: Point | null = null;
   private lastSampleTime = 0;
-  private revealInterval: ReturnType<typeof setInterval> | null = null;
+  private revealRafId: number | null = null;
 
   private config: ControllerConfig | null = null;
 
@@ -292,9 +290,9 @@ export class Controller {
   reset(): void {
     if (!this.ctx) return;
 
-    if (this.revealInterval) {
-      clearInterval(this.revealInterval);
-      this.revealInterval = null;
+    if (this.revealRafId !== null) {
+      cancelAnimationFrame(this.revealRafId);
+      this.revealRafId = null;
     }
 
     this.drawCover(this.ctx);
@@ -306,7 +304,7 @@ export class Controller {
 
   revealAll(options?: RevealAllOptions, onFinish?: () => void): void {
     if (!this.ctx || !this.config) return;
-    if (this._isAllRevealed || this.revealInterval) return;
+    if (this._isAllRevealed || this.revealRafId !== null) return;
     const { width, height } = this.config;
 
     if (!options?.duration) {
@@ -333,7 +331,7 @@ export class Controller {
       return;
     }
 
-    const { duration, interval = 16, blockSize = 1 } = options;
+    const { duration, blockSize = 1 } = options;
     const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     const { data } = imageData;
     const bufferWidth = this.canvas.width;
@@ -345,11 +343,11 @@ export class Controller {
     const opaque = getBlockOriginIndices(bufferWidth, bufferHeight, entryStep, this.scratchMask);
     shuffleInPlace(opaque);
 
-    const startTime = Date.now();
+    const startTime = performance.now();
     let offset = 0;
 
-    this.revealInterval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const targetIdx = Math.floor(progress * opaque.length);
 
@@ -370,20 +368,23 @@ export class Controller {
       ctx.putImageData(imageData, 0, 0);
 
       if (progress >= 1) {
-        clearInterval(this.revealInterval!);
-        this.revealInterval = null;
+        this.revealRafId = null;
         this._isComplete = true;
         this._isScratchingLocked = true;
         this._isAllRevealed = true;
         onFinish?.();
+      } else {
+        this.revealRafId = requestAnimationFrame(tick);
       }
-    }, interval);
+    };
+
+    this.revealRafId = requestAnimationFrame(tick);
   }
 
   dispose(): void {
-    if (this.revealInterval) {
-      clearInterval(this.revealInterval);
-      this.revealInterval = null;
+    if (this.revealRafId !== null) {
+      cancelAnimationFrame(this.revealRafId);
+      this.revealRafId = null;
     }
   }
 }
