@@ -7,14 +7,14 @@ import {
     useRef,
     useState,
 } from "react";
-import { getCoords, getGlobalCoords } from "../canvas/canvas";
-import type { Point } from "../math/math";
-import type { Region } from "../region/region";
-import { Controller } from "./controller";
-import type { CustomBrush, RevealAllOptions } from "./controller";
+import {getCoords, getGlobalCoords} from "../canvas/canvas";
+import type {Point} from "../math/math";
+import type {Region} from "../region/region";
+import {Controller} from "./controller";
+import type {CustomBrush, RevealAllOptions} from "./controller";
 
-export type { CustomBrush, RevealAllOptions };
-export type { Region };
+export type {CustomBrush, RevealAllOptions};
+export type {Region};
 
 export type Props = {
     width: number;
@@ -103,171 +103,170 @@ type MouseOrTouchEvent =
 
 const DEFAULT_COVER_COLOR = "#ccc";
 
-const ScratchCard = forwardRef<ScratchCardRef, Props>(
-    function ScratchCard(props, ref) {
-        const {
+const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props> = (props, ref) => {
+    const {
+        width,
+        height,
+        coverImage,
+        coverColor,
+        finishPercent = 70,
+        onComplete,
+        onScratchEnd,
+        onScratch,
+        brushSize = 20,
+        lockOnComplete = true,
+        children,
+        customBrush,
+        scratchRegion,
+        validationRegion,
+        imageSmoothingQuality = "low",
+        scratchInterval = 50,
+        ariaLabel,
+        canvasProps,
+        pixelRatio,
+        onReady,
+        onError,
+    } = props;
+
+    const [loaded, setLoaded] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+    const controllerRef = useRef<Controller | null>(null);
+
+    useEffect(() => {
+        if (!canvasRef.current) return;
+        let isMounted = true;
+
+        controllerRef.current = new Controller({
+            canvas: canvasRef.current,
+            bgCanvas: bgCanvasRef.current
+        });
+
+        controllerRef.current.init({
             width,
             height,
+            pixelRatio,
+            imageSmoothingQuality,
             coverImage,
-            coverColor,
-            finishPercent = 70,
-            onComplete,
-            onScratchEnd,
-            onScratch,
-            brushSize = 20,
-            lockOnComplete = true,
-            children,
+            coverColor: coverColor ?? DEFAULT_COVER_COLOR,
             customBrush,
             scratchRegion,
             validationRegion,
-            imageSmoothingQuality = "low",
-            scratchInterval = 50,
-            ariaLabel,
-            canvasProps,
-            pixelRatio,
-            onReady,
-            onError,
-        } = props;
+            brushSize,
+            scratchInterval,
+            finishPercent,
+            lockOnComplete,
+        }).then(() => {
+            if (!isMounted) return;
+            setLoaded(true);
+            onReady?.();
+        }).catch((err) => {
+            if (!isMounted) return;
+            const _err = err instanceof Error ? err : new Error(String(err))
+            onError?.(_err)
+        });
 
-        const [loaded, setLoaded] = useState(false);
-        const canvasRef = useRef<HTMLCanvasElement>(null);
-        const bgCanvasRef = useRef<HTMLCanvasElement>(null);
-        const controllerRef = useRef<Controller | null>(null);
-
-        useEffect(() => {
-            if (!canvasRef.current) return;
-            let isMounted = true;
-
-            controllerRef.current = new Controller({
-                canvas: canvasRef.current,
-                bgCanvas: bgCanvasRef.current
-            });
-
-            controllerRef.current.init({
-                width,
-                height,
-                pixelRatio,
-                imageSmoothingQuality,
-                coverImage,
-                coverColor: coverColor ?? DEFAULT_COVER_COLOR,
-                customBrush,
-                scratchRegion,
-                validationRegion,
-                brushSize,
-                scratchInterval,
-                finishPercent,
-                lockOnComplete,
-            }).then(() => {
-                if(!isMounted) return;
-                setLoaded(true);
-                onReady?.();
-            }).catch((err) => {
-                if(!isMounted) return;
-                const _err = err instanceof Error ? err : new Error(String(err))
-                onError?.(_err)
-            });
-
-            return () => {
-                isMounted = false;
-                controllerRef.current?.dispose()
-            };
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, []);
-
-        const reset = useCallback(() => {
-            controllerRef.current?.reset();
-        }, []);
-
-        const revealAll = useCallback(
-            (options?: RevealAllOptions) => {
-                const controller = controllerRef.current;
-                if (!controller) return;
-                const wasComplete = controller.isComplete;
-                controller.revealAll(options, () => {
-                    if (!wasComplete) onComplete?.();
-                });
-            },
-            [onComplete],
-        );
-
-        useImperativeHandle(ref, () => ({ reset, revealAll }), [
-            reset,
-            revealAll,
-        ]);
-
-        const handlePointerDown = (e: MouseOrTouchEvent) => {
-            const canvas = canvasRef.current;
-            if (!canvas || !controllerRef.current) return;
-            controllerRef.current.startStroke(getCoords(e, canvas));
+        return () => {
+            isMounted = false;
+            controllerRef.current?.dispose()
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        const handlePointerMove = (e: MouseOrTouchEvent) => {
-            const canvas = canvasRef.current;
-            if (!canvas || !controllerRef.current) return;
-            const point = getCoords(e, canvas);
-            const result = controllerRef.current.applyStroke(point);
-            if (!result) return;
-            onScratch?.(result.percent, point, getGlobalCoords(e));
-            if (result.complete) onComplete?.();
-        };
+    const reset = useCallback(() => {
+        controllerRef.current?.reset();
+    }, []);
 
-        const handlePointerUp = useCallback(() => {
-            if (controllerRef.current?.endStroke()) {
-                onScratchEnd?.();
-            }
-        }, [onScratchEnd]);
+    const revealAll = useCallback(
+        (options?: RevealAllOptions) => {
+            const controller = controllerRef.current;
+            if (!controller) return;
+            const wasComplete = controller.isComplete;
+            controller.revealAll(options, () => {
+                if (!wasComplete) onComplete?.();
+            });
+        },
+        [onComplete],
+    );
 
-        useEffect(() => {
-            window.addEventListener("mouseup", handlePointerUp);
-            return () => window.removeEventListener("mouseup", handlePointerUp);
-        }, [handlePointerUp]);
+    useImperativeHandle(ref, () => ({reset, revealAll}), [
+        reset,
+        revealAll,
+    ]);
+
+    const handlePointerDown = (e: MouseOrTouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas || !controllerRef.current) return;
+        controllerRef.current.startStroke(getCoords(e, canvas));
+    };
+
+    const handlePointerMove = (e: MouseOrTouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas || !controllerRef.current) return;
+        const point = getCoords(e, canvas);
+        const result = controllerRef.current.applyStroke(point);
+        if (!result) return;
+        onScratch?.(result.percent, point, getGlobalCoords(e));
+        if (result.complete) onComplete?.();
+    };
+
+    const handlePointerUp = useCallback(() => {
+        if (controllerRef.current?.endStroke()) {
+            onScratchEnd?.();
+        }
+    }, [onScratchEnd]);
+
+    useEffect(() => {
+        window.addEventListener("mouseup", handlePointerUp);
+        return () => window.removeEventListener("mouseup", handlePointerUp);
+    }, [handlePointerUp]);
 
 
-        const containerStyle = useMemo(() => buildContainerStyle(width, height), [width, height]);
-        const canvasStyle = useMemo(() => buildCanvasStyle(width, height), [width, height]);
-        const bgCanvasStyle = useMemo(() => buildBgCanvasStyle(width, height), [width, height]);
-        const resultStyle = useMemo(() => buildResultStyle(loaded), [loaded]);
+    const containerStyle = useMemo(() => buildContainerStyle(width, height), [width, height]);
+    const canvasStyle = useMemo(() => buildCanvasStyle(width, height), [width, height]);
+    const bgCanvasStyle = useMemo(() => buildBgCanvasStyle(width, height), [width, height]);
+    const resultStyle = useMemo(() => buildResultStyle(loaded), [loaded]);
 
-        return (
-            <div className="ScratchCard__Container" style={containerStyle}>
+    return (
+        <div className="ScratchCard__Container" style={containerStyle}>
+            <canvas
+                {...canvasProps}
+                ref={canvasRef}
+                className={["ScratchCard__Canvas", canvasProps?.className]
+                    .filter(Boolean)
+                    .join(" ")}
+                style={{...canvasProps?.style, ...canvasStyle}}
+                width={width}
+                height={height}
+                role="img"
+                aria-label={ariaLabel}
+                onMouseDown={handlePointerDown}
+                onTouchStart={handlePointerDown}
+                onMouseMove={handlePointerMove}
+                onTouchMove={handlePointerMove}
+                onMouseUp={handlePointerUp}
+                onTouchEnd={handlePointerUp}
+                onTouchCancel={handlePointerUp}
+            />
+            {scratchRegion && (
                 <canvas
-                    {...canvasProps}
-                    ref={canvasRef}
-                    className={["ScratchCard__Canvas", canvasProps?.className]
-                        .filter(Boolean)
-                        .join(" ")}
-                    style={{ ...canvasProps?.style, ...canvasStyle }}
+                    ref={bgCanvasRef}
+                    className="ScratchCard__CoverBackground"
+                    style={bgCanvasStyle}
                     width={width}
                     height={height}
-                    role="img"
-                    aria-label={ariaLabel}
-                    onMouseDown={handlePointerDown}
-                    onTouchStart={handlePointerDown}
-                    onMouseMove={handlePointerMove}
-                    onTouchMove={handlePointerMove}
-                    onMouseUp={handlePointerUp}
-                    onTouchEnd={handlePointerUp}
-                    onTouchCancel={handlePointerUp}
+                    aria-hidden
                 />
-                {scratchRegion && (
-                    <canvas
-                        ref={bgCanvasRef}
-                        className="ScratchCard__CoverBackground"
-                        style={bgCanvasStyle}
-                        width={width}
-                        height={height}
-                        aria-hidden
-                    />
-                )}
-                <div className="ScratchCard__Result" style={resultStyle}>
-                    {children}
-                </div>
+            )}
+            <div className="ScratchCard__Result" style={resultStyle}>
+                {children}
             </div>
-        );
-    },
-);
+        </div>
+    );
+}
 
-export default ScratchCard;
+const ScratchCard = forwardRef<ScratchCardRef, Props>(ScratchCardComponent);
+export default ScratchCard
 
 const buildDimensionsStyle = (width: number, height: number) => {
     return {
