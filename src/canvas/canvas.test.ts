@@ -69,14 +69,14 @@ describe('getFilledInPixels', () => {
   it('returns correct percentage for partially transparent pixels', () => {
     // 2 transparent, 2 opaque out of 4 pixels
     const data = [0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255];
-    expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 2))).toBe(50);
+    expect(getFilledInPixels(1, mockCtx(data), mockCanvas(0, 0, 2, 2))).toBe(50);
   });
 
   it('does not count dark opaque pixels as transparent', () => {
     // pixel 0: black opaque (R=0 G=0 B=0 A=255) — must NOT be counted
     // pixel 1: fully transparent (R=0 G=0 B=0 A=0) — must be counted
     const data = [0, 0, 0, 255, 0, 0, 0, 0];
-    expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 1))).toBe(50);
+    expect(getFilledInPixels(1, mockCtx(data), mockCanvas(0, 0, 2, 1))).toBe(50);
   });
 
   it('always reads full buffer pixels', () => {
@@ -97,7 +97,7 @@ describe('getFilledInPixels', () => {
     const data = [0,0,0,0, 255,255,255,255, 0,0,0,0, 255,255,255,255];
     // mask covers only first 2 pixels: 1 transparent + 1 opaque = 50%
     const mask = [true, true, false, false];
-    expect(getFilledInPixels(4, mockCtx(data), mockCanvas(0, 0, 2, 2), mask)).toBe(50);
+    expect(getFilledInPixels(1, mockCtx(data), mockCanvas(0, 0, 2, 2), mask)).toBe(50);
   });
 
   it('returns 0 when mask covers no pixels', () => {

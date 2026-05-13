@@ -4,12 +4,14 @@ import { createRef } from 'react';
 import ScratchCard from './scratchCard';
 import type { ScratchCardRef } from './scratchCard';
 
-const opaque = [255, 255, 255, 255];
-const transparent = new Uint8ClampedArray(4);
+const CANVAS_W = 300;
+const CANVAS_H = 200;
+const opaque = new Uint8ClampedArray(CANVAS_W * CANVAS_H * 4).fill(255);
+const transparent = new Uint8ClampedArray(CANVAS_W * CANVAS_H * 4);
 
 const mockCtx = {
   drawImage: vi.fn(),
-  getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(opaque) })),
+  getImageData: vi.fn(() => ({ data: opaque })),
   putImageData: vi.fn(),
   beginPath: vi.fn(),
   arc: vi.fn(),
@@ -47,7 +49,7 @@ beforeEach(() => {
   mockCtx.restore.mockClear();
   mockCtx.clip.mockClear();
   mockCtx.globalCompositeOperation = '';
-  mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(opaque) });
+  mockCtx.getImageData.mockReturnValue({ data: opaque });
 });
 
 const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) => {
