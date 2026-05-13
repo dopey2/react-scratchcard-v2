@@ -49,23 +49,66 @@ export const getBlockOriginIndices = (
   return indices;
 };
 
+export type SampleRect = { x: number; y: number; width: number; height: number };
+
+export const computeMaskBoundingBox = (
+  mask: boolean[],
+  canvasWidth: number,
+  canvasHeight: number
+): SampleRect => {
+  let minX = canvasWidth, minY = canvasHeight, maxX = 0, maxY = 0;
+  let found = false;
+
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i]) continue;
+    found = true;
+    const x = i % canvasWidth;
+    const y = Math.floor(i / canvasWidth);
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+
+  if (!found) return { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
+  return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
+};
+
+/**
+ * Returns the percentage of pixels that have been erased (alpha = 0).
+ * @param pixelStride - Sample every Nth pixel in both axes. Higher = faster but less accurate.
+ * @param ctx - Canvas 2D context to read from.
+ * @param canvas - Canvas element (used for dimensions and full-canvas mask index remapping).
+ * @param mask - Optional boolean mask; only pixels where `mask[i] === true` are counted.
+ * @param sampleRect - Optional sub-rect; limits the sample region to avoid looping over each pixels;
+ *                   - (precomputed during initialization based on scratchRegion & validationRegion)
+ */
 export const getFilledInPixels = (
-  stride: number,
+  pixelStride: number,
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  mask?: boolean[] | null
+  mask?: boolean[] | null,
+  sampleRect?: SampleRect | null
 ): number => {
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const { data } = pixels;
-  let total = 0;
-  let count = 0;
+  const rx = sampleRect?.x ?? 0;
+  const ry = sampleRect?.y ?? 0;
+  const rw = sampleRect?.width ?? canvas.width;
+  const rh = sampleRect?.height ?? canvas.height;
 
-  for (let i = 0; i < data.length; i += stride) {
-    if (mask && !mask[i / 4]) continue;
-    total++;
-    if (data[i + 3] === 0) count++;
+  const { data } = ctx.getImageData(rx, ry, rw, rh);
+  const fullWidth = canvas.width;
+  let total = 0;
+  let erased = 0;
+
+  for (let row = 0; row < rh; row += pixelStride) {
+    for (let col = 0; col < rw; col += pixelStride) {
+      const fullPixelIdx = (ry + row) * fullWidth + (rx + col);
+      if (mask && !mask[fullPixelIdx]) continue;
+      total++;
+      if (data[(row * rw + col) * 4 + 3] === 0) erased++;
+    }
   }
 
   if (total === 0) return 0;
-  return Math.round((count / total) * 100);
+  return Math.round((erased / total) * 100);
 };

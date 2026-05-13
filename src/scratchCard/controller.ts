@@ -1,4 +1,4 @@
-import { getBlockOriginIndices, getFilledInPixels } from '../canvas/canvas';
+import { getBlockOriginIndices, getFilledInPixels, computeMaskBoundingBox, type SampleRect } from '../canvas/canvas';
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 import { buildRegionMask, buildRegionPath, type Region } from '../region/region';
 
@@ -62,6 +62,7 @@ export class Controller {
   private scratchMask: boolean[] | null = null;
   private validationMask: boolean[] | null = null;
   private scratchRegionPath: Path2D | null = null;
+  private sampleRect: SampleRect | null = null;
 
   // contextual
   private _isScratching = false;
@@ -183,7 +184,14 @@ export class Controller {
       );
     }
 
-    // 5) Draw the cover & the clone canvas cover
+    // 5) Cache the sample zone for pixel sampling optimization
+    // This restrict the sample area to avoid looping over each pixels for sampling
+    const activeMask = this.validationMask ?? this.scratchMask;
+    if (activeMask) {
+      this.sampleRect = computeMaskBoundingBox(activeMask, this.canvas.width, this.canvas.height);
+    }
+
+    // 6) Draw the cover & the clone canvas cover
     if (this.ctx) this.drawCover(this.ctx);
     if (scratchRegion) this.drawBgCover();
   }
@@ -262,7 +270,7 @@ export class Controller {
     if (now - this.lastSampleTime < scratchInterval) return null;
     this.lastSampleTime = now;
 
-    const percent = getFilledInPixels(32, this.ctx, this.canvas, this.validationMask ?? this.scratchMask);
+    const percent = getFilledInPixels(8, this.ctx, this.canvas, this.validationMask ?? this.scratchMask, this.sampleRect);
     const complete = !this._isComplete && percent > finishPercent;
     if (complete) {
       this._isComplete = true;
