@@ -9,7 +9,7 @@ const CANVAS_H = 200;
 const opaque = new Uint8ClampedArray(CANVAS_W * CANVAS_H * 4).fill(255);
 const transparent = new Uint8ClampedArray(CANVAS_W * CANVAS_H * 4);
 
-const mockCtx = {
+const createMockCtx = () => ({
   drawImage: vi.fn(),
   getImageData: vi.fn(() => ({ data: opaque })),
   putImageData: vi.fn(),
@@ -21,9 +21,11 @@ const mockCtx = {
   save: vi.fn(),
   restore: vi.fn(),
   clip: vi.fn(),
-  globalCompositeOperation: '',
-  imageSmoothingQuality: 'low',
-};
+  globalCompositeOperation: '' as string,
+  imageSmoothingQuality: 'low' as ImageSmoothingQuality,
+});
+
+let mockCtx: ReturnType<typeof createMockCtx>;
 
 beforeAll(() => {
   class MockImage {
@@ -38,18 +40,10 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  mockCtx.drawImage.mockClear();
-  mockCtx.getImageData.mockReset();
-  mockCtx.putImageData.mockClear();
-  mockCtx.beginPath.mockClear();
-  mockCtx.arc.mockClear();
-  mockCtx.fill.mockClear();
-  mockCtx.scale.mockClear();
-  mockCtx.save.mockClear();
-  mockCtx.restore.mockClear();
-  mockCtx.clip.mockClear();
-  mockCtx.globalCompositeOperation = '';
-  mockCtx.getImageData.mockReturnValue({ data: opaque });
+  mockCtx = createMockCtx();
+  const getCtxSpy = HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>;
+  getCtxSpy.mockReset();
+  getCtxSpy.mockImplementation(() => mockCtx);
 });
 
 const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) => {
@@ -603,11 +597,10 @@ describe('background canvas', () => {
 
   it('erases the scratch region interior on mount using destination-out', async () => {
     mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(300 * 200 * 4).fill(255) });
-    setup({ coverColor: '#f00', scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    setup({ coverImage: undefined, coverColor: '#f00', scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
     await waitForInit();
-    const ops = mockCtx.fillRect.mock.calls;
-    // at least two fillRect calls: one for main cover, one for bg cover, one for destination-out erase
-    expect(ops.length).toBeGreaterThanOrEqual(3);
+    // 3 fillRect calls: main cover, bg cover, destination-out erase (clipped to scratchRegion)
+    expect(mockCtx.fillRect.mock.calls.length).toBeGreaterThanOrEqual(3);
     expect(mockCtx.clip).toHaveBeenCalled();
   });
 
