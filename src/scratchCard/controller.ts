@@ -239,7 +239,8 @@ export class Controller {
   }
 
   applyStroke(point: Point): StrokeResult | null {
-    if (!this._isScratching || this._isScratchingLocked || !this.ctx || !this.config) return null;
+    if (!this.ctx || !this.config) throw new Error('ScratchCard::applyStroke used before init');
+    if (!this._isScratching || this._isScratchingLocked) return null;
 
     const { brushSize, customBrush, scratchInterval, finishPercent, lockOnComplete } = this.config;
     const distance = distanceBetween(this.lastPointerPos, point);
@@ -291,7 +292,7 @@ export class Controller {
   }
 
   reset(): void {
-    if (!this.ctx) return;
+    if (!this.ctx || !this.config) throw new Error('ScratchCard::reset used before init');
 
     if (this.revealRafId !== null) {
       cancelAnimationFrame(this.revealRafId);
@@ -306,7 +307,7 @@ export class Controller {
   }
 
   revealAll(options?: RevealAllOptions, onFinish?: () => void): void {
-    if (!this.ctx || !this.config) return;
+    if (!this.ctx || !this.config) throw new Error('ScratchCard::revealAll used before init');
     if (this._isAllRevealed || this.revealRafId !== null) return;
     const { width, height } = this.config;
 
