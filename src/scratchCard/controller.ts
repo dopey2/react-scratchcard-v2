@@ -253,8 +253,8 @@ export class Controller {
     }
 
     for (let i = 0; i < distance; i++) {
-      const x = this.lastPointerPos ? this.lastPointerPos.x + Math.sin(angle) * i : 0;
-      const y = this.lastPointerPos ? this.lastPointerPos.y + Math.cos(angle) * i : 0;
+      const x = this.lastPointerPos ? this.lastPointerPos.x + Math.cos(angle) * i : 0;
+      const y = this.lastPointerPos ? this.lastPointerPos.y + Math.sin(angle) * i : 0;
 
       if (this.brushImage && customBrush) {
         this.ctx.drawImage(this.brushImage, x - customBrush.width / 2, y - customBrush.height / 2, customBrush.width, customBrush.height);

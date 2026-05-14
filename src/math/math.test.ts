@@ -19,11 +19,11 @@ describe('distanceBetween', () => {
 
 describe('angleBetween', () => {
   it('returns correct angle for known points', () => {
-    // straight right: atan2(1, 0) = π/2
-    expect(angleBetween({ x: 0, y: 0 }, { x: 1, y: 0 })).toBeCloseTo(Math.PI / 2);
-    // straight down: atan2(0, 1) = 0
-    expect(angleBetween({ x: 0, y: 0 }, { x: 0, y: 1 })).toBeCloseTo(0);
-    // diagonal: atan2(1, 1) = π/4
+    // straight right: atan2(dy=0, dx=1) = 0
+    expect(angleBetween({ x: 0, y: 0 }, { x: 1, y: 0 })).toBeCloseTo(0);
+    // straight down: atan2(dy=1, dx=0) = π/2
+    expect(angleBetween({ x: 0, y: 0 }, { x: 0, y: 1 })).toBeCloseTo(Math.PI / 2);
+    // diagonal: atan2(dy=1, dx=1) = π/4
     expect(angleBetween({ x: 0, y: 0 }, { x: 1, y: 1 })).toBeCloseTo(Math.PI / 4);
   });
 

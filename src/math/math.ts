@@ -12,7 +12,7 @@ export const distanceBetween = (p1: Point | null, p2: Point | null): number => {
 
 export const angleBetween = (p1: Point | null, p2: Point | null): number => {
   if (p1 && p2) {
-    return Math.atan2(p2.x - p1.x, p2.y - p1.y);
+    return Math.atan2(p2.y - p1.y, p2.x - p1.x);
   }
   return 0;
 };
