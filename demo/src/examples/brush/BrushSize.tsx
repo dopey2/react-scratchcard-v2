@@ -21,7 +21,7 @@ export default function BrushSize() {
               min={5}
               max={60}
               value={brushSize}
-              onChange={(e) => { setBrushSize(Number(e.target.value)); ref.current?.reset(); setComplete(false); }}
+              onChange={(e) => { setBrushSize(Number(e.target.value)); setComplete(false); }}
               style={{ width: '100%', marginTop: '0.25rem' }}
             />
           </label>
@@ -30,6 +30,7 @@ export default function BrushSize() {
       }
     >
       <ScratchCard
+        key={brushSize}
         ref={ref}
         width={320}
         height={226}
