@@ -206,27 +206,30 @@ export class Controller {
     }
   }
 
+  private eraseRegion(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, width: number, height: number): void {
+    if (this.scratchRegionPath) {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.save();
+      ctx.clip(this.scratchRegionPath);
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (this.scratchMask) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const { data } = imageData;
+      for (let i = 3; i < data.length; i += 4) {
+        if (this.scratchMask[(i - 3) / 4]) data[i] = 0;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }
+
   private drawBgCover(): void {
     if (!this.bgCanvas || !this.bgCtx || !this.config) return;
     const { width, height } = this.config;
 
     this.drawCover(this.bgCtx);
-
-    if (this.scratchRegionPath) {
-      this.bgCtx.globalCompositeOperation = 'destination-out';
-      this.bgCtx.save();
-      this.bgCtx.clip(this.scratchRegionPath);
-      this.bgCtx.fillRect(0, 0, width, height);
-      this.bgCtx.restore();
-      this.bgCtx.globalCompositeOperation = 'source-over';
-    } else if (this.scratchMask) {
-      const imageData = this.bgCtx.getImageData(0, 0, this.bgCanvas.width, this.bgCanvas.height);
-      const { data } = imageData;
-      for (let i = 3; i < data.length; i += 4) {
-        if (this.scratchMask[(i - 3) / 4]) data[i] = 0;
-      }
-      this.bgCtx.putImageData(imageData, 0, 0);
-    }
+    this.eraseRegion(this.bgCtx, this.bgCanvas, width, height);
   }
 
   startStroke(point: Point): void {
@@ -308,20 +311,10 @@ export class Controller {
     const { width, height } = this.config;
 
     if (!options?.duration) {
-      this.ctx.globalCompositeOperation = 'destination-out';
-      if (this.scratchRegionPath) {
-        this.ctx.save();
-        this.ctx.clip(this.scratchRegionPath);
-        this.ctx.fillRect(0, 0, width, height);
-        this.ctx.restore();
-      } else if (this.scratchMask) {
-        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        const { data } = imageData;
-        for (let i = 3; i < data.length; i += 4) {
-          if (this.scratchMask[(i - 3) / 4]) data[i] = 0;
-        }
-        this.ctx.putImageData(imageData, 0, 0);
+      if (this.scratchRegionPath || this.scratchMask) {
+        this.eraseRegion(this.ctx, this.canvas, width, height);
       } else {
+        this.ctx.globalCompositeOperation = 'destination-out';
         this.ctx.fillRect(0, 0, width, height);
       }
       this._isComplete = true;
