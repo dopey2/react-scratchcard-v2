@@ -82,7 +82,7 @@ export class Controller {
   get isScratchingLocked() { return this._isScratchingLocked; }
   get isComplete() { return this._isComplete; }
 
-  loadImageAsync(image: string, message: string): Promise<HTMLImageElement | null> {
+  private loadImageAsync(image: string, message: string): Promise<HTMLImageElement | null> {
      return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'Anonymous';
@@ -96,7 +96,7 @@ export class Controller {
     });
   }
 
-  async loadImages(args: {
+  private async loadImages(args: {
     coverImage?: string,
     customBrush?: string,
     scratchRegion?: string,
@@ -119,7 +119,7 @@ export class Controller {
     this.validRegionImage = validRegion;
   }
 
-  setupCanvas(canvas: HTMLCanvasElement, config: {width: number, height: number, dpr: number, imageSmoothingQuality: ImageSmoothingQuality, willReadFrequently: boolean}) {
+  private setupCanvas(canvas: HTMLCanvasElement, config: {width: number, height: number, dpr: number, imageSmoothingQuality: ImageSmoothingQuality, willReadFrequently: boolean}) {
     const ctx = canvas.getContext('2d', { willReadFrequently: config.willReadFrequently });
     canvas.width = Math.floor(config.width * config.dpr);
     canvas.height = Math.floor(config.height * config.dpr);
