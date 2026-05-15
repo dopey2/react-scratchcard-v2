@@ -8,7 +8,9 @@ export type RectRegion = {
 
 export type CircleRegion = {
   type: 'circle';
+  /** X coordinate of the circle's center, in CSS pixels. */
   x: number;
+  /** Y coordinate of the circle's center, in CSS pixels. */
   y: number;
   radius: number;
 };
