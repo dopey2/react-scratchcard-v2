@@ -271,7 +271,7 @@ describe('ScratchCard', () => {
       const canvas = container.querySelector('canvas')!;
       scratch(canvas);
       fireEvent.mouseUp(canvas);
-      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+      expect(onScratchEnd).toHaveBeenCalledWith(expect.any(Number));
     });
 
     it('fires onScratchEnd on touchend', () => {
@@ -281,7 +281,7 @@ describe('ScratchCard', () => {
       fireEvent.touchStart(canvas, { touches: [{ clientX: 50, clientY: 50 }] });
       fireEvent.touchMove(canvas, { touches: [{ clientX: 100, clientY: 100 }] });
       fireEvent.touchEnd(canvas);
-      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+      expect(onScratchEnd).toHaveBeenCalledWith(expect.any(Number));
     });
 
     it('fires onScratchEnd on global mouseup (released outside canvas)', () => {
@@ -289,7 +289,7 @@ describe('ScratchCard', () => {
       const { container } = setup({ onScratchEnd });
       scratch(container.querySelector('canvas')!);
       fireEvent.mouseUp(window);
-      expect(onScratchEnd).toHaveBeenCalledTimes(1);
+      expect(onScratchEnd).toHaveBeenCalledWith(expect.any(Number));
     });
 
     it('does not fire onScratchEnd if pointer was never down', () => {

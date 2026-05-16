@@ -27,8 +27,12 @@ export type Props = {
     finishPercent?: number;
     /** Fires when the finishPercent is reached inside the defined scratching zone */
     onComplete?: () => void;
-    /** Fires when the user stops scratching, whether `finishPercent` was reached or not. */
-    onScratchEnd?: () => void;
+    /**
+     * Fires when the user stops scratching, whether `finishPercent` was reached or not.
+     * @param percent - Current percentage of pixels erased at the moment of release (0–100).
+     *                  Always reflects the latest pixel state regardless of `scratchInterval`.
+     */
+    onScratchEnd?: (percent: number) => void;
     /**
      * Fires on each pixel sample during scratching. Throttled by `scratchInterval`.
      * @param percent - Current percentage of pixels erased (0–100).
@@ -203,8 +207,9 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     };
 
     const handlePointerUp = useCallback(() => {
-        if (controllerRef.current?.endStroke()) {
-            onScratchEnd?.();
+        const percent = controllerRef.current?.endStroke();
+        if (percent != null) {
+            onScratchEnd?.(percent);
         }
     }, [onScratchEnd]);
 

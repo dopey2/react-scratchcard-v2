@@ -275,13 +275,11 @@ export class Controller {
     return { percent, complete };
   }
 
-  endStroke(): boolean {
-    if(this._isScratching) {
-      this._isScratching = false;
-      return true;
-    }
-
-    return false;
+  endStroke(): number | null {
+    if (!this._isScratching) return null;
+    this._isScratching = false;
+    if (!this.ctx) return null;
+    return getFilledInPixels(8, this.ctx, this.canvas, this.validationMask ?? this.scratchMask, this.sampleRect);
   }
 
   reset(): void {
