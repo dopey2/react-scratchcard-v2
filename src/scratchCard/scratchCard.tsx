@@ -122,7 +122,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         onError,
     } = props;
 
-    const [loaded, setLoaded] = useState(false);
+    const [isReady, setIsReady] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const bgCanvasRef = useRef<HTMLCanvasElement>(null);
     const controllerRef = useRef<Controller | null>(null);
@@ -150,7 +150,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
             lockOnComplete,
         }).then(() => {
             if (!isMounted) return;
-            setLoaded(true);
+            setIsReady(true);
             onReady?.();
         }).catch((err) => {
             if (!isMounted) return;
@@ -215,9 +215,9 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
 
 
     const containerStyle = useMemo(() => buildContainerStyle(width, height), [width, height]);
-    const canvasStyle = useMemo(() => buildCanvasStyle(width, height), [width, height]);
+    const canvasStyle = useMemo(() => buildCanvasStyle(width, height, isReady), [width, height, isReady]);
     const bgCanvasStyle = useMemo(() => buildBgCanvasStyle(width, height), [width, height]);
-    const resultStyle = useMemo(() => buildResultStyle(loaded), [loaded]);
+    const resultStyle = useMemo(() => buildResultStyle(isReady), [isReady]);
 
     return (
         <div className="ScratchCard__Container" style={containerStyle}>
@@ -276,11 +276,12 @@ const buildContainerStyle = (width: number, height: number): React.CSSProperties
     };
 };
 
-const buildCanvasStyle = (width: number, height: number): React.CSSProperties => ({
+const buildCanvasStyle = (width: number, height: number, isReady: boolean): React.CSSProperties => ({
     position: "absolute",
     top: 0,
     zIndex: 1,
     touchAction: "none",
+    pointerEvents: isReady ? "auto" : "none",
     ...buildDimensionsStyle(width, height),
 });
 
@@ -292,8 +293,8 @@ const buildBgCanvasStyle = (width: number, height: number): React.CSSProperties 
     ...buildDimensionsStyle(width, height),
 });
 
-const buildResultStyle = (loaded: boolean): React.CSSProperties => ({
-    visibility: loaded ? "visible" : "hidden",
+const buildResultStyle = (isReady: boolean): React.CSSProperties => ({
+    visibility: isReady ? "visible" : "hidden",
     width: "100%",
     height: "100%",
 });
