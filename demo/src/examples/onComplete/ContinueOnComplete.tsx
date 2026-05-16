@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function ContinueOnComplete() {
@@ -22,7 +22,7 @@ export default function ContinueOnComplete() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#10b981"
+        cover={Covers.color('#10b981')}
         finishPercent={70}
         lockOnComplete={false}
         onComplete={() => setComplete(true)}

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { Shape, type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Brushes, Covers, Shape, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 import coverImg from './scratchCover.png';
 import maskImg from './scratchMask.png';
@@ -29,8 +29,8 @@ export default function ImageMaskRegion() {
         ref={ref}
         width={320}
         height={226}
-        coverImage={coverImg}
-        brushSize={8}
+        cover={Covers.image(coverImg)}
+        brush={Brushes.circle(8)}
         finishPercent={70}
         lockOnComplete={true}
         scratchRegion={Shape.image(maskImg)}

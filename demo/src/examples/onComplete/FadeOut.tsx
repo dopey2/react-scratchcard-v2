@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function FadeOut() {
@@ -22,7 +22,7 @@ export default function FadeOut() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#f59e0b"
+        cover={Covers.color('#f59e0b')}
         finishPercent={70}
         onComplete={() => setComplete(true)}
         canvasProps={{

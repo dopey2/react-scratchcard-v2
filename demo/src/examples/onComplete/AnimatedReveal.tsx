@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function AnimatedReveal() {
@@ -22,7 +22,7 @@ export default function AnimatedReveal() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#0ea5e9"
+        cover={Covers.color('#0ea5e9')}
         finishPercent={70}
         onComplete={() => { setComplete(true); ref.current?.revealAll({ duration: 1200, blockSize: 4 }); }}
       >

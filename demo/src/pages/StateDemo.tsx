@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import img from '../img.jpg';
 
 type Release = 'inside' | 'outside' | null;
@@ -45,8 +45,9 @@ export default function StateDemo() {
     return () => window.removeEventListener('mouseup', handleWindowMouseUp);
   }, []);
 
-  const handleScratchEnd = () => {
+  const handleScratchEnd = (percent: number) => {
     setIsScratching(false);
+    setPercent(percent);
     setTimeout(() => {
       setLastRelease(releasedInsideRef.current ? 'inside' : 'outside');
       releasedInsideRef.current = false;
@@ -103,7 +104,7 @@ export default function StateDemo() {
           ref={cardRef}
           width={320}
           height={226}
-          coverImage={img}
+          cover={Covers.image(img)}
           finishPercent={80}
           onScratch={setPercent}
           onScratchEnd={handleScratchEnd}

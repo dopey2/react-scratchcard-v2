@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, {Brushes, Covers, type ScratchCardRef} from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
-import {CUSTOM_BRUSH_PRESET} from "./customBrushImage";
+import { brushImageBase64 } from "./customBrushImage";
+
+const imageBrush = Brushes.image(brushImageBase64, 30, 30)
+const coloredCover = Covers.color('#475569')
 
 export default function CustomBrush() {
   const ref = useRef<ScratchCardRef>(null);
@@ -23,9 +26,9 @@ export default function CustomBrush() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#475569"
+        cover={coloredCover}
+        brush={imageBrush}
         finishPercent={70}
-        customBrush={CUSTOM_BRUSH_PRESET}
         onComplete={() => setComplete(true)}
       >
         <Result />

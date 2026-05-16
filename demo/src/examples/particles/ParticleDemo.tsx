@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 import ParticleSystem, { type ParticleSystemRef } from './ParticleSystem';
 import img from '../../img.jpg';
@@ -27,7 +27,7 @@ export default function ParticleDemo() {
         ref={cardRef}
         width={320}
         height={226}
-        coverImage={img}
+        cover={Covers.image(img)}
         scratchInterval={0}
         lockOnComplete={false}
         onComplete={() => setComplete(true)}

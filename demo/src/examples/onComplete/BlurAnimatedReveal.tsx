@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function BlurAnimatedReveal() {
@@ -27,7 +27,7 @@ export default function BlurAnimatedReveal() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#0f172a"
+        cover={Covers.color('#0f172a')}
         finishPercent={70}
         lockOnComplete={false}
         onComplete={trigger}

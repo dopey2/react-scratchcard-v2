@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function BlurOut() {
@@ -22,7 +22,7 @@ export default function BlurOut() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#8b5cf6"
+        cover={Covers.color('#8b5cf6')}
         finishPercent={70}
         onComplete={() => setComplete(true)}
         canvasProps={{

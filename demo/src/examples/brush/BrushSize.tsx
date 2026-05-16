@@ -1,11 +1,21 @@
-import { useRef, useState } from 'react';
-import ScratchCard, { type ScratchCardRef } from 'react-scratchcard-v2';
+import {useEffect, useRef, useState} from 'react';
+import ScratchCard, {Brushes, Covers, type ScratchCardRef} from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
+
+
+const coloredCover = Covers.color('#475569')
 
 export default function BrushSize() {
   const ref = useRef<ScratchCardRef>(null);
+  const brushRef = useRef(Brushes.circle(20))
+
   const [brushSize, setBrushSize] = useState(20);
   const [complete, setComplete] = useState(false);
+
+  useEffect(() => {
+    brushRef.current = Brushes.circle(brushSize);
+  }, [brushSize]);
+
 
   return (
     <Example
@@ -34,8 +44,8 @@ export default function BrushSize() {
         ref={ref}
         width={320}
         height={226}
-        coverColor="#334155"
-        brushSize={brushSize}
+        cover={coloredCover}
+        brush={brushRef.current}
         finishPercent={70}
         onComplete={() => setComplete(true)}
       >

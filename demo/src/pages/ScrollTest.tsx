@@ -1,4 +1,4 @@
-import ScratchCard from 'react-scratchcard-v2';
+import ScratchCard, { Covers } from 'react-scratchcard-v2';
 import img from '../img.jpg';
 
 const Block = ({ label }: { label: string }) => (
@@ -39,7 +39,7 @@ export default function ScrollTest() {
         <ScratchCard
           width={320}
           height={226}
-          coverImage={img}
+          cover={Covers.image(img)}
           finishPercent={80}
           onComplete={() => console.log('complete')}
         >
