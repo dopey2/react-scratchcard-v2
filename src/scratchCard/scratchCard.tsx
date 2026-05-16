@@ -11,18 +11,18 @@ import {getCoords, getGlobalCoords} from "../canvas/canvas";
 import type {Point} from "../math/math";
 import type {Region} from "../region/region";
 import {Controller} from "./controller";
-import type {CustomBrush, RevealAllOptions} from "./controller";
+import type {RevealAllOptions} from "./controller";
+import {Cover, Covers} from "./cover";
+import {Brush, Brushes} from "./brush";
 
-export type {CustomBrush, RevealAllOptions};
+export type {RevealAllOptions};
 export type {Region};
 
 export type Props = {
     width: number;
     height: number;
-    /** URL or base64 data URL of the image drawn as the scratch-off cover. */
-    coverImage?: string;
-    /** Solid color cover — used when `coverImage` is not provided. Defaults to `#ccc`. */
-    coverColor?: string;
+    cover?: Cover;
+    brush?: Brush;
     /** Percentage of pixels that must be erased before `onComplete` fires. Defaults to `70`. */
     finishPercent?: number;
     /** Fires when the finishPercent is reached inside the defined scratching zone */
@@ -40,13 +40,9 @@ export type Props = {
         lastPosition: Point,
         globalPosition: Point,
     ) => void;
-    /** Size of the brush circle in pixels. Ignored when `customBrush` is set. Defaults to `20`. */
-    brushSize?: number;
     /** When `true`, scratching is blocked after `finishPercent` is reached. Defaults to `true`. */
     lockOnComplete?: boolean;
     children?: React.ReactNode;
-    /** Image brush — replaces the default filled circle. Use `CUSTOM_BRUSH_PRESET` as a starting point. */
-    customBrush?: CustomBrush;
     /**
      * Restricts where the user can scratch. Pixels outside the region cannot be erased.
      * Omit to allow scratching anywhere on the card.
@@ -107,16 +103,14 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     const {
         width,
         height,
-        coverImage,
-        coverColor,
+        cover = Covers.color(DEFAULT_COVER_COLOR),
+        brush = Brushes.circle(20),
         finishPercent = 70,
         onComplete,
         onScratchEnd,
         onScratch,
-        brushSize = 20,
         lockOnComplete = true,
         children,
-        customBrush,
         scratchRegion,
         validationRegion,
         imageSmoothingQuality = "low",
@@ -147,12 +141,10 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
             height,
             pixelRatio,
             imageSmoothingQuality,
-            coverImage,
-            coverColor: coverColor ?? DEFAULT_COVER_COLOR,
-            customBrush,
+            cover,
+            brush,
             scratchRegion,
             validationRegion,
-            brushSize,
             scratchInterval,
             finishPercent,
             lockOnComplete,

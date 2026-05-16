@@ -3,6 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import ScratchCard from './scratchCard';
 import type { ScratchCardRef } from './scratchCard';
+import { Covers } from './cover';
 
 const CANVAS_W = 300;
 const CANVAS_H = 200;
@@ -48,7 +49,7 @@ beforeEach(() => {
 
 const setup = (props: Partial<React.ComponentProps<typeof ScratchCard>> = {}) => {
   return render(
-    <ScratchCard width={300} height={200} coverImage='test.jpg' scratchInterval={0} {...props} />
+    <ScratchCard width={300} height={200} cover={Covers.image('test.jpg')} scratchInterval={0} {...props} />
   );
 };
 
@@ -597,7 +598,7 @@ describe('background canvas', () => {
 
   it('erases the scratch region interior on mount using destination-out', async () => {
     mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(300 * 200 * 4).fill(255) });
-    setup({ coverImage: undefined, coverColor: '#f00', scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    setup({ cover: Covers.color('#f00'), scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
     await waitForInit();
     // 3 fillRect calls: main cover, bg cover, destination-out erase (clipped to scratchRegion)
     expect(mockCtx.fillRect.mock.calls.length).toBeGreaterThanOrEqual(3);
@@ -606,7 +607,7 @@ describe('background canvas', () => {
 
   it('redraws bg canvas on reset()', () => {
     const ref = createRef<ScratchCardRef>();
-    setup({ ref, coverColor: '#f00', scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    setup({ ref, cover: Covers.color('#f00'), scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
     const fillRectCallsAfterMount = mockCtx.fillRect.mock.calls.length;
     act(() => { ref.current?.reset(); });
     expect(mockCtx.fillRect.mock.calls.length).toBeGreaterThan(fillRectCallsAfterMount);

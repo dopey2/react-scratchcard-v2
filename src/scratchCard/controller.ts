@@ -1,15 +1,8 @@
 import { getBlockOriginIndices, getFilledInPixels, computeMaskBoundingBox, type SampleRect } from '../canvas/canvas';
 import { angleBetween, distanceBetween, shuffleInPlace, type Point } from '../math/math';
 import { buildRegionMask, buildRegionPath, type Region } from '../region/region';
-
-export type CustomBrush = {
-  /** URL or base64 data URL of the brush image. */
-  image: string;
-  /** Brush width in pixels. */
-  width: number;
-  /** Brush height in pixels. */
-  height: number;
-};
+import {Cover} from "./cover";
+import {Brush} from "./brush";
 
 export type RevealAllOptions = {
   /** Animation duration in ms. Omit for an instant reveal. */
@@ -28,14 +21,12 @@ export type StrokeResult = {
 export type ControllerConfig = {
   width: number;
   height: number;
+  cover?: Cover;
+  brush?: Brush;
   pixelRatio?: number;
   imageSmoothingQuality: ImageSmoothingQuality;
-  coverImage?: string;
-  coverColor: string;
-  customBrush?: CustomBrush;
   scratchRegion?: Region;
   validationRegion?: Region;
-  brushSize: number;
   scratchInterval: number;
   finishPercent: number;
   lockOnComplete: boolean;
@@ -98,7 +89,7 @@ export class Controller {
 
   private async loadImages(args: {
     coverImage?: string,
-    customBrush?: string,
+    brushImage?: string,
     scratchRegion?: string,
     validRegion?: string
   }): Promise<void> {
@@ -108,7 +99,7 @@ export class Controller {
 
     const [cover, brush, scratchRegion, validRegion] = await Promise.all([
       buildPromise('Cover', args.coverImage),
-      buildPromise('Brush', args.customBrush),
+      buildPromise('Brush', args.brushImage),
       buildPromise('ScratchRegion', args.scratchRegion),
       buildPromise('ValidRegion', args.validRegion),
     ]);
@@ -133,7 +124,7 @@ export class Controller {
 
   async init(config: ControllerConfig): Promise<void> {
     this.config = config;
-    const { width, height, pixelRatio, imageSmoothingQuality, coverImage, customBrush, scratchRegion, validationRegion } = config;
+    const { width, height, pixelRatio, imageSmoothingQuality, cover, brush, scratchRegion, validationRegion } = config;
 
     this.dpr = pixelRatio ?? window.devicePixelRatio ?? 1;
 
@@ -150,8 +141,8 @@ export class Controller {
     const validRegionImageToLoad = validationRegion?.type === 'image' ? validationRegion.image : undefined;
 
     await this.loadImages({
-      coverImage,
-      customBrush: customBrush?.image,
+      coverImage: cover?.type === 'image' ? cover?.image : undefined,
+      brushImage: brush?.type === 'image' ? brush.image : undefined,
       scratchRegion: scratchRegionImageToLoad,
       validRegion: validRegionImageToLoad
     });
@@ -196,12 +187,13 @@ export class Controller {
 
   private drawCover(ctx: CanvasRenderingContext2D): void {
     if (!this.config) return;
-    const { width, height, coverColor } = this.config;
+    const { width, height, cover } = this.config;
     ctx.globalCompositeOperation = 'source-over';
     if (this.coverImage) {
       ctx.drawImage(this.coverImage, 0, 0, width, height);
     } else {
-      ctx.fillStyle = coverColor;
+      const color = cover?.type === 'color' ? cover.color : '#CCC';
+      ctx.fillStyle = color;
       ctx.fillRect(0, 0, width, height);
     }
   }
@@ -242,7 +234,7 @@ export class Controller {
     if (!this.ctx || !this.config) throw new Error('ScratchCard::applyStroke used before init');
     if (!this._isScratching || this._isScratchingLocked) return null;
 
-    const { brushSize, customBrush, scratchInterval, finishPercent, lockOnComplete } = this.config;
+    const { brush, scratchInterval, finishPercent, lockOnComplete } = this.config;
     const distance = distanceBetween(this.lastPointerPos, point);
     const angle = angleBetween(this.lastPointerPos, point);
 
@@ -256,9 +248,10 @@ export class Controller {
       const x = this.lastPointerPos ? this.lastPointerPos.x + Math.cos(angle) * i : 0;
       const y = this.lastPointerPos ? this.lastPointerPos.y + Math.sin(angle) * i : 0;
 
-      if (this.brushImage && customBrush) {
-        this.ctx.drawImage(this.brushImage, x - customBrush.width / 2, y - customBrush.height / 2, customBrush.width, customBrush.height);
+      if (this.brushImage && brush?.type === "image") {
+        this.ctx.drawImage(this.brushImage, x - brush.width / 2, y - brush.height / 2, brush.width, brush.height);
       } else {
+        const brushSize = brush?.type === "circle" ? brush.radius : 20;
         this.ctx.beginPath();
         this.ctx.arc(x, y, brushSize, 0, 2 * Math.PI, false);
         this.ctx.fill();
