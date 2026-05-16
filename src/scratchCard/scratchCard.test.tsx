@@ -193,14 +193,14 @@ describe('ScratchCard', () => {
       expect(typeof onScratch.mock.calls[0][0]).toBe('number');
     });
 
-    it('passes canvas-relative lastPosition as second argument', () => {
+    it('passes canvas-relative position as second argument', () => {
       const onScratch = vi.fn();
       const { container } = setup({ scratchInterval: 0, onScratch });
       const canvas = container.querySelector('canvas')!;
       fireEvent.mouseDown(canvas, { clientX: 50, clientY: 60 });
       fireEvent.mouseMove(canvas, { clientX: 100, clientY: 120 });
-      const lastPosition = onScratch.mock.calls[0][1];
-      expect(lastPosition).toEqual({ x: 100, y: 120 });
+      const position = onScratch.mock.calls[0][1];
+      expect(position).toEqual({ x: 100, y: 120 });
     });
 
     it('passes viewport globalPosition as third argument matching event clientX/clientY', () => {

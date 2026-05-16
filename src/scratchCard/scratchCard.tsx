@@ -36,12 +36,12 @@ export type Props = {
     /**
      * Fires on each pixel sample during scratching. Throttled by `scratchInterval`.
      * @param percent - Current percentage of pixels erased (0–100).
-     * @param lastPosition - Canvas coordinates of the last pointer position.
+     * @param position - Canvas-relative coordinates of the current pointer position.
      * @param globalPosition - Viewport (client) coordinates of the pointer.
      */
     onScratch?: (
         percent: number,
-        lastPosition: Point,
+        position: Point,
         globalPosition: Point,
     ) => void;
     /** When `true`, scratching is blocked after `finishPercent` is reached. Defaults to `true`. */
