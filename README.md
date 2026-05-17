@@ -36,27 +36,14 @@ yarn add react-scratchcard-v2
 ## Usage
 
 ```tsx
-import {useRef} from 'react';
-import ScratchCard, {Covers, type ScratchCardRef} from 'react-scratchcard-v2';
+import ScratchCard, {Covers} from 'react-scratchcard-v2';
 import coverImg from './cover.jpg';
 
 function App() {
-    const ref = useRef<ScratchCardRef>(null);
-
     return (
-        <>
-            <button onClick={() => ref.current?.reset()}>Reset</button>
-
-            <ScratchCard
-                ref={ref}
-                width={300}
-                height={200}
-                cover={Covers.image(coverImg)}
-                onComplete={() => console.log('done')}
-            >
-                <h1>Content</h1>
-            </ScratchCard>
-        </>
+        <ScratchCard width={300} height={200} cover={Covers.image(coverImg)}>
+            <h1>Content</h1>
+        </ScratchCard>
     );
 }
 ```
@@ -66,25 +53,23 @@ function App() {
 ```tsx
 import {useRef} from 'react';
 import ScratchCard, {Covers, Brushes, Shape, type ScratchCardRef} from 'react-scratchcard-v2';
-import coverImg from './cover.png';
+import coverImg from './cover.jpg';
 import scratchRegionImg from './scratchRegion.png';
 import validationRegionImg from './validationRegion.png';
+// import brushImg from './brush.png';
 
-const COVER = Covers.color('red');
-// or a custom image cover
-// const COVER = Covers.image(coverImg);
+const COVER = Covers.image(coverImg);
 
 const BRUSH = Brushes.circle(20);
-// or use a custom image brush
+// or use a custom image brush:
 // const BRUSH = Brushes.image(brushImg, 20, 20);
 
 // opaque pixels define the scratchable area
 const SCRATCH_REGION = Shape.image(scratchRegionImg);
 
 // opaque pixels define the area that counts toward scratch completion
-// if not defined, scratch completion is based on the entire canvas
+// if not defined, completion is based on the entire canvas
 const VALIDATION_REGION = Shape.image(validationRegionImg);
-
 
 function App() {
     const ref = useRef<ScratchCardRef>(null);
@@ -101,10 +86,10 @@ function App() {
                 brush={BRUSH}
                 scratchRegion={SCRATCH_REGION}
                 validationRegion={VALIDATION_REGION}
+                finishPercent={80}
                 onComplete={() => console.log('done')}
                 onScratchStart={() => console.log('start')}
-                onScratch={(percent, position, globalPosition) => console.log(percent)}
-                finishPercent={80}
+                onScratch={(percent) => console.log(percent)}
             >
                 <h1>Content</h1>
             </ScratchCard>
