@@ -265,6 +265,32 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('onScratchStart', () => {
+    it('fires on mousedown', () => {
+      const onScratchStart = vi.fn();
+      const { container } = setup({ onScratchStart });
+      fireEvent.mouseDown(container.querySelector('canvas')!, { clientX: 50, clientY: 50 });
+      expect(onScratchStart).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires on touchstart', () => {
+      const onScratchStart = vi.fn();
+      const { container } = setup({ onScratchStart });
+      fireEvent.touchStart(container.querySelector('canvas')!, { touches: [{ clientX: 50, clientY: 50 }] });
+      expect(onScratchStart).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires once per gesture even with multiple moves', () => {
+      const onScratchStart = vi.fn();
+      const { container } = setup({ onScratchStart });
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.mouseDown(canvas, { clientX: 50, clientY: 50 });
+      fireEvent.mouseMove(canvas, { clientX: 60, clientY: 60 });
+      fireEvent.mouseMove(canvas, { clientX: 70, clientY: 70 });
+      expect(onScratchStart).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('onScratchEnd', () => {
     it('fires onScratchEnd on mouseup', () => {
       const onScratchEnd = vi.fn();

@@ -84,6 +84,8 @@ export type Props = {
      * Trade-off: `undefined` = sharper image, higher memory; `1` = lower memory, blurry on HiDPI.
      */
     pixelRatio?: number;
+    /** Fires when the user begins scratching (mousedown / touchstart). */
+    onScratchStart?: () => void;
     /** Fires when the canvas is ready and the cover has been drawn. */
     onReady?: () => void;
     /** Fires if initialization fails (e.g. cover image or region mask fails to load). */
@@ -114,6 +116,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         finishPercent = 70,
         onComplete,
         onScratchEnd,
+        onScratchStart,
         onScratch,
         lockOnComplete = true,
         children,
@@ -199,6 +202,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         const canvas = canvasRef.current;
         if (!canvas || !controllerRef.current) return;
         controllerRef.current.startStroke(getCoords(e, canvas));
+        onScratchStart?.();
     };
 
     const handlePointerMove = (e: MouseOrTouchEvent) => {
