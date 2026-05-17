@@ -515,6 +515,22 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('before ready', () => {
+    it('reset() is a no-op and does not throw when called before init completes', () => {
+      const ref = createRef<ScratchCardRef>();
+      setup({ ref });
+      expect(() => ref.current?.reset()).not.toThrow();
+    });
+
+    it('revealAll() is a no-op and does not fire onComplete when called before init completes', () => {
+      const onComplete = vi.fn();
+      const ref = createRef<ScratchCardRef>();
+      setup({ ref, onComplete });
+      expect(() => ref.current?.revealAll()).not.toThrow();
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+  });
+
   describe('reset()', () => {
     it('allows onComplete to fire again after reset', async () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
