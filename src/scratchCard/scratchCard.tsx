@@ -233,14 +233,16 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     const bgCanvasStyle = useMemo(() => buildBgCanvasStyle(width, height), [width, height]);
     const resultStyle = useMemo(() => buildResultStyle(isReady), [isReady]);
 
+    const canvasClassName = ["ScratchCard__Canvas", canvasProps?.className]
+        .filter(Boolean)
+        .join(" ");
+
     return (
         <div className="ScratchCard__Container" style={containerStyle}>
             <canvas
                 {...canvasProps}
                 ref={canvasRef}
-                className={["ScratchCard__Canvas", canvasProps?.className]
-                    .filter(Boolean)
-                    .join(" ")}
+                className={canvasClassName}
                 style={{...canvasProps?.style, ...canvasStyle}}
                 width={width}
                 height={height}
