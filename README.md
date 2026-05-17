@@ -89,7 +89,7 @@ function App() {
                 finishPercent={80}
                 onComplete={() => console.log('done')}
                 onScratchStart={() => console.log('start')}
-                onScratch={(percent) => console.log(percent)}
+                onScratch={(percent, position, globalPosition) => console.log(percent, position, globalPosition)}
             >
                 <h1>Content</h1>
             </ScratchCard>
