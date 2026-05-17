@@ -5,6 +5,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: '/react-scratchcard-v2/',
   server: {
     port: 3000,
     open: true,

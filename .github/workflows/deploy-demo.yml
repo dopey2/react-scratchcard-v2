@@ -1,0 +1,55 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install library deps
+        run: npm ci
+
+      - name: Install demo deps
+        run: npm ci
+        working-directory: demo
+
+      - name: Build demo
+        run: npm run build
+        working-directory: demo
+
+      # GitHub Pages is a static host — copy index.html to 404.html so the
+      # client-side router handles direct URL loads instead of returning a 404.
+      - name: Copy index.html to 404.html
+        run: cp demo/dist/index.html demo/dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo/dist
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
