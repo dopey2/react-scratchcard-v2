@@ -95,6 +95,27 @@ describe('ScratchCard', () => {
     });
   });
 
+  describe('enabled', () => {
+    it('blocks scratching when false', () => {
+      const { container } = setup({ enabled: false });
+      scratch(container.querySelector('canvas')!);
+      expect(mockCtx.arc).not.toHaveBeenCalled();
+    });
+
+    it('sets pointerEvents to none when false', () => {
+      const { container } = setup({ enabled: false });
+      const canvas = container.querySelector('.ScratchCard__Canvas') as HTMLElement;
+      expect(canvas.style.pointerEvents).toBe('none');
+    });
+
+    it('does not fire onScratchStart when false', () => {
+      const onScratchStart = vi.fn();
+      const { container } = setup({ enabled: false, onScratchStart });
+      fireEvent.mouseDown(container.querySelector('canvas')!, { clientX: 50, clientY: 50 });
+      expect(onScratchStart).not.toHaveBeenCalled();
+    });
+  });
+
   describe('drawing', () => {
     it('uses destination-out composite operation on mousemove', () => {
       const { container } = setup();

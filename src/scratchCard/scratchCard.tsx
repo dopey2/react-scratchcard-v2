@@ -46,6 +46,8 @@ export type Props = {
     ) => void;
     /** When `true`, scratching is blocked after `finishPercent` is reached. Defaults to `true`. */
     lockOnComplete?: boolean;
+    /** When `false`, all pointer interaction is disabled. Defaults to `true`. */
+    enabled?: boolean;
     children?: React.ReactNode;
     /**
      * Restricts where the user can scratch. Pixels outside the region cannot be erased.
@@ -119,6 +121,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         onScratchStart,
         onScratch,
         lockOnComplete = true,
+        enabled = true,
         children,
         scratchRegion,
         validationRegion,
@@ -199,6 +202,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     ]);
 
     const handlePointerDown = (e: MouseOrTouchEvent) => {
+        if (!enabled) return;
         const canvas = canvasRef.current;
         if (!canvas || !controllerRef.current) return;
         controllerRef.current.startStroke(getCoords(e, canvas));
@@ -206,6 +210,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     };
 
     const handlePointerMove = (e: MouseOrTouchEvent) => {
+        if (!enabled) return;
         const canvas = canvasRef.current;
         if (!canvas || !controllerRef.current) return;
         const point = getCoords(e, canvas);
@@ -229,7 +234,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
 
 
     const containerStyle = useMemo(() => buildContainerStyle(width, height), [width, height]);
-    const canvasStyle = useMemo(() => buildCanvasStyle(width, height, isReady), [width, height, isReady]);
+    const canvasStyle = useMemo(() => buildCanvasStyle(width, height, isReady, enabled), [width, height, isReady, enabled]);
     const bgCanvasStyle = useMemo(() => buildBgCanvasStyle(width, height), [width, height]);
     const resultStyle = useMemo(() => buildResultStyle(isReady), [isReady]);
 
@@ -292,12 +297,12 @@ const buildContainerStyle = (width: number, height: number): React.CSSProperties
     };
 };
 
-const buildCanvasStyle = (width: number, height: number, isReady: boolean): React.CSSProperties => ({
+const buildCanvasStyle = (width: number, height: number, isReady: boolean, enabled: boolean): React.CSSProperties => ({
     position: "absolute",
     top: 0,
     zIndex: 1,
     touchAction: "none",
-    pointerEvents: isReady ? "auto" : "none",
+    pointerEvents: isReady && enabled ? "auto" : "none",
     ...buildDimensionsStyle(width, height),
 });
 
