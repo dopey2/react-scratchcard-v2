@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import ScratchCard, { Covers, Shape, type ScratchCardRef } from 'react-scratchcard-v2';
+import ScratchCard, { Covers, Regions, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
 
 export default function CircleScratchRegion() {
@@ -30,7 +30,7 @@ export default function CircleScratchRegion() {
         cover={Covers.color('#e11d48')}
         finishPercent={50}
         lockOnComplete={true}
-        scratchRegion={Shape.circle(160, 113, 90)}
+        scratchRegion={Regions.circle(160, 113, 90)}
         onComplete={handleComplete}
       >
         <Result />

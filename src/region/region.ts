@@ -108,7 +108,7 @@ export const buildRegionPath = (region: RectRegion | CircleRegion): Path2D => {
   return path;
 };
 
-export const Shape = {
+export const Regions = {
   rect: (x: number, y: number, width: number, height: number): RectRegion => ({
     type: 'rect',
     x,
