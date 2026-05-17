@@ -98,9 +98,7 @@ function App() {
 }
 ```
 
-## API
-
-### Props
+## Props
 
 | Prop                    | Type                                          | Default                | Description                                                                                                                            |
 |-------------------------|-----------------------------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
@@ -126,15 +124,86 @@ function App() {
 | `canvasProps`           | `CanvasHTMLAttributes`                        | —                      | Extra props forwarded to the `<canvas>` element                                                                                        |
 | `children`              | `ReactNode`                                   | —                      | Content revealed beneath the canvas                                                                                                    |
 
-### Ref
+____
 
-Access via `useRef<ScratchCardRef>`.
+## Types
 
-| Member                | Type                                                            | Description                                                                                                                                     |
-|-----------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `reset()`             | `() => void`                                                    | Restore to initial covered state. Allows `onComplete` to fire again                                                                             |
-| `revealAll(options?)` | `(options?: { duration?: number; blockSize?: number }) => void` | Erase remaining pixels. Pass `{ duration }` for an animated reveal. `blockSize` controls the N×N pixel block size erased per step (default `1`) |
-| `isReady`             | `boolean`                                                       | `true` once the cover has been drawn and the card is interactive                                                                                |
+### Cover
+
+```ts
+// Drawn on top of the canvas. Only opaque pixels are scratchable —
+// transparent areas are excluded from the scratch zone automatically.
+type Cover =
+  | { type: 'color'; color: string }
+  | { type: 'image'; image: string }
+
+// factory
+Covers.color('#ff0000')
+Covers.image(coverImg)
+```
+
+
+
+### Brush
+
+```ts
+// Shape used to erase pixels as the user scratches.
+// Only opaque pixels of the brush image contribute to the erase effect.
+type Brush =
+  | { type: 'circle'; radius: number }
+  | { type: 'image'; image: string; width: number; height: number }
+
+// factory
+Brushes.circle(20)
+Brushes.image(brushImg, 20, 20)
+```
+
+### Region
+
+```ts
+// Regions have two distinct uses:
+//
+//   scratchRegion    — defines where the brush has effect. Scratching outside
+//                      it does nothing; the cover outside remains permanent.
+//
+//   validationRegion — defines which pixels count toward finishPercent.
+//                      Has no effect on where the user can scratch.
+//
+// They can be combined: e.g. a star-shaped scratchRegion (user can only scratch
+// inside the star) with a smaller circle validationRegion (completion fires when
+// that circle is 70% revealed, not the whole star).
+//
+// If only scratchRegion is set, completion is calculated from the scratchable area.
+// If only validationRegion is set, the user can scratch anywhere but only that
+// zone counts toward completion.
+//
+// When using an image, only opaque pixels define the region.
+type Region =
+  | { type: 'rect';   x: number; y: number; width: number; height: number }
+  | { type: 'circle'; x: number; y: number; radius: number }
+  | { type: 'image';  image: string }
+
+// factory
+Regions.rect(0, 0, 200, 100)
+Regions.circle(150, 100, 80)
+Regions.image(maskImg)
+```
+
+____
+
+## Ref
+
+```ts
+// access via useRef<ScratchCardRef>
+
+ref.current.isReady                                          // true once the cover is drawn and the card is interactive
+
+ref.current.reset()                                          // restore to initial state, allows onComplete to fire again
+
+ref.current.revealAll()                                      // instant full reveal
+ref.current.revealAll({ duration: 500 })                     // animated reveal over 500ms
+ref.current.revealAll({ duration: 500, blockSize: 4 })       // animated, erases in 4×4 pixel blocks
+```
 
 ## License
 
