@@ -52,6 +52,8 @@ export class Controller {
   private validationMask: boolean[] | null = null;
   private scratchRegionPath: Path2D | null = null;
   private sampleRect: SampleRect | null = null;
+  // cached cover snapshot for outside-mask pixel restoration (image regions only)
+  private outsideMaskCover: HTMLCanvasElement | null = null;
 
   // contextual
   private _isScratching = false;
@@ -183,6 +185,12 @@ export class Controller {
     // 6) Draw the cover & the clone canvas cover
     if (this.ctx) this.drawCover(this.ctx);
     if (scratchRegion) this.drawBgCover();
+
+    // 7) For image regions: build a cached canvas of cover pixels outside the mask.
+    //    Used in applyStroke to restore outside-mask pixels erased by the brush.
+    if (this.scratchMask && !this.scratchRegionPath && this.ctx) {
+      this.outsideMaskCover = this.buildOutsideMaskCover();
+    }
   }
 
   private drawCover(ctx: CanvasRenderingContext2D): void {
@@ -214,6 +222,24 @@ export class Controller {
       }
       ctx.putImageData(imageData, 0, 0);
     }
+  }
+
+  private buildOutsideMaskCover(): HTMLCanvasElement | null {
+    if (!this.scratchMask || !this.canvas) return null;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = this.canvas.width;
+    offscreen.height = this.canvas.height;
+    const offCtx = offscreen.getContext('2d');
+    if (!offCtx) return null;
+    // Copy the fully-drawn cover from the main canvas (physical pixels, no transform)
+    offCtx.drawImage(this.canvas, 0, 0);
+    const imgData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+    const { data } = imgData;
+    for (let i = 0; i < this.scratchMask.length; i++) {
+      if (this.scratchMask[i]) data[i * 4 + 3] = 0; // erase inside-mask pixels
+    }
+    offCtx.putImageData(imgData, 0, 0);
+    return offscreen;
   }
 
   private drawBgCover(): void {
@@ -256,6 +282,12 @@ export class Controller {
         this.ctx.arc(x, y, brushSize, 0, 2 * Math.PI, false);
         this.ctx.fill();
       }
+    }
+
+    // For image regions: restore outside-mask pixels erased by the brush
+    if (this.outsideMaskCover && this.config) {
+      this.ctx.globalCompositeOperation = 'source-over';
+      this.ctx.drawImage(this.outsideMaskCover, 0, 0, this.config.width, this.config.height);
     }
 
     this.ctx.restore();
