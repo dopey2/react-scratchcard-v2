@@ -55,6 +55,13 @@ export type Props = {
      */
     scratchRegion?: Region;
     /**
+     * When `true`, renders a background canvas behind the main canvas showing the cover
+     * outside the `scratchRegion`. Only useful when applying CSS animations (e.g. a fade)
+     * to the main canvas — without it, the outer cover would fade along with the scratch zone.
+     * Has no effect without `scratchRegion`. Defaults to `false`.
+     */
+    coverBackground?: boolean;
+    /**
      * Restricts the region that counts toward `finishPercent`.
      * Only pixels within this region contribute to the completion percentage.
      * Omit to count the entire card.
@@ -124,6 +131,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         enabled = true,
         children,
         scratchRegion,
+        coverBackground = false,
         validationRegion,
         imageSmoothingQuality = "low",
         scratchInterval = 50,
@@ -261,7 +269,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
                 onTouchEnd={handlePointerUp}
                 onTouchCancel={handlePointerUp}
             />
-            {scratchRegion && (
+            {scratchRegion && coverBackground && (
                 <canvas
                     ref={bgCanvasRef}
                     className="ScratchCard__CoverBackground"

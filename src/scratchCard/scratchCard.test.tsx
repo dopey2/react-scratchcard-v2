@@ -658,25 +658,32 @@ describe('ScratchCard', () => {
 });
 
 describe('background canvas', () => {
+  const withBg = { scratchRegion: { type: 'rect' as const, x: 0, y: 0, width: 100, height: 100 }, coverBackground: true };
+
   it('is not rendered without scratchRegion', () => {
     const { container } = setup();
     expect(container.querySelectorAll('canvas')).toHaveLength(1);
   });
 
-  it('is rendered when scratchRegion is set', () => {
+  it('is not rendered when scratchRegion is set but coverBackground is false', () => {
     const { container } = setup({ scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    expect(container.querySelectorAll('canvas')).toHaveLength(1);
+  });
+
+  it('is rendered when scratchRegion and coverBackground are both set', () => {
+    const { container } = setup(withBg);
     expect(container.querySelectorAll('canvas')).toHaveLength(2);
   });
 
   it('has aria-hidden and no pointer events', () => {
-    const { container } = setup({ scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    const { container } = setup(withBg);
     const bg = container.querySelector('.ScratchCard__CoverBackground') as HTMLElement;
     expect(bg.getAttribute('aria-hidden')).toBe('true');
     expect(bg.style.pointerEvents).toBe('none');
   });
 
   it('sits behind the main canvas (lower z-index)', () => {
-    const { container } = setup({ scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    const { container } = setup(withBg);
     const main = container.querySelector('.ScratchCard__Canvas') as HTMLElement;
     const bg = container.querySelector('.ScratchCard__CoverBackground') as HTMLElement;
     expect(Number(main.style.zIndex)).toBeGreaterThan(Number(bg.style.zIndex));
@@ -684,7 +691,7 @@ describe('background canvas', () => {
 
   it('erases the scratch region interior on mount using destination-out', async () => {
     mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray(300 * 200 * 4).fill(255) });
-    setup({ cover: Covers.color('#f00'), scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    setup({ cover: Covers.color('#f00'), ...withBg });
     await waitForInit();
     // 3 fillRect calls: main cover, bg cover, destination-out erase (clipped to scratchRegion)
     expect(mockCtx.fillRect.mock.calls.length).toBeGreaterThanOrEqual(3);
@@ -693,7 +700,7 @@ describe('background canvas', () => {
 
   it('redraws bg canvas on reset()', async () => {
     const ref = createRef<ScratchCardRef>();
-    setup({ ref, cover: Covers.color('#f00'), scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    setup({ ref, cover: Covers.color('#f00'), ...withBg });
     await waitForInit();
     const fillRectCallsAfterMount = mockCtx.fillRect.mock.calls.length;
     act(() => { ref.current?.reset(); });
