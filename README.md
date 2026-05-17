@@ -4,11 +4,12 @@
 
 [![NPM](https://img.shields.io/npm/v/react-scratchcard-v2.svg)](https://www.npmjs.com/package/react-scratchcard-v2) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
-
 ##### Original repo by Aleksik (not maintained)
+
 https://github.com/aleksik/react-scratchcard
 
 ##### V2 Improvement ✨
+
 - Resize the image using width and height props (in the original repo, the image was croped)
 - Smooth fade out animation on scratch complete
 - Add type definition (ts)
@@ -25,135 +26,130 @@ https://github.com/aleksik/react-scratchcard
 ```bash
 npm install --save react-scratchcard-v2
 ```
+
 or
+
 ```bash
 yarn add react-scratchcard-v2
 ```
 
-
 ## Usage
 
 ```tsx
-import React, { useRef }  from 'react';
-import ScratchCard from 'react-scratchcard-v2';
+import {useRef} from 'react';
+import ScratchCard, {Covers, type ScratchCardRef} from 'react-scratchcard-v2';
+import coverImg from './cover.jpg';
 
-import * as IMG from './img.jpg';
+function App() {
+    const ref = useRef<ScratchCardRef>(null);
 
-const App = () => {
+    return (
+        <>
+            <button onClick={() => ref.current?.reset()}>Reset</button>
 
-  const ref = useRef<ScratchCard>(null);
-
-  const onClickReset = () => {
-    ref.current && ref.current.reset();
-  }
-
-  return (
-    <div>
-      <button onClick={onClickReset}>Reset</button>
-      <ScratchCard
-        width={320}
-        height={226}
-        image={IMG}
-        finishPercent={80}
-        onComplete={() => console.log('complete')}
-      >
-        <div style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        >
-          <h1>Scratch card</h1>
-        </div>
-      </ScratchCard>
-    </div>
-  );
-};
-```
-
-### Custom brush
-
-```tsx
-const App = () => {
-  return (
-    <div>
-      <ScratchCard
-        width={320}
-        height={226}
-        image={IMG}
-        finishPercent={80}
-        customBrush={{
-          image: require('./brush.img'),
-          width: 15,
-          height: 15
-        }}
-      >
-        <h1>Scratch card</h1>
-      </ScratchCard>
-    </div>
-  );
-};
-```
-
-or you can use CUSTOM_BRUSH_PRESET object
-
-```tsx
-import { CUSTOM_BRUSH_PRESET } from 'react-scratchcard-v2';
-
-const App = () => {
-  return (
-    <div>
-      <ScratchCard
-        width={320}
-        height={226}
-        image={IMG}
-        finishPercent={80}
-        customBrush={CUSTOM_BRUSH_PRESET}
-      >
-        <h1>Scratch card</h1>
-      </ScratchCard>
-    </div>
-  )
+            <ScratchCard
+                ref={ref}
+                width={300}
+                height={200}
+                cover={Covers.image(coverImg)}
+                onComplete={() => console.log('done')}
+            >
+                <h1>Content</h1>
+            </ScratchCard>
+        </>
+    );
 }
 ```
 
+## Advanced Usage
 
-## Type
+```tsx
+import {useRef} from 'react';
+import ScratchCard, {Covers, Brushes, Shape, type ScratchCardRef} from 'react-scratchcard-v2';
+import coverImg from './cover.png';
+import scratchRegionImg from './scratchRegion.png';
+import validationRegionImg from './validationRegion.png';
+
+const COVER = Covers.color('red');
+// or a custom image cover
+// const COVER = Covers.image(coverImg);
+
+const BRUSH = Brushes.circle(20);
+// or use a custom image brush
+// const BRUSH = Brushes.image(brushImg, 20, 20);
+
+// opaque pixels define the scratchable area
+const SCRATCH_REGION = Shape.image(scratchRegionImg);
+
+// opaque pixels define the area that counts toward scratch completion
+// if not defined, scratch completion is based on the entire canvas
+const VALIDATION_REGION = Shape.image(validationRegionImg);
+
+
+function App() {
+    const ref = useRef<ScratchCardRef>(null);
+
+    return (
+        <>
+            <button onClick={() => ref.current?.reset()}>Reset</button>
+
+            <ScratchCard
+                ref={ref}
+                width={300}
+                height={200}
+                cover={COVER}
+                brush={BRUSH}
+                scratchRegion={SCRATCH_REGION}
+                validationRegion={VALIDATION_REGION}
+                onComplete={() => console.log('done')}
+                onScratchStart={() => console.log('start')}
+                onScratch={(percent, position, globalPosition) => console.log(percent)}
+                finishPercent={80}
+            >
+                <h1>Content</h1>
+            </ScratchCard>
+        </>
+    );
+}
+```
+
+## API
 
 ### Props
 
-| **name**          | **type**        | **default** |
-|-------------------|-----------------|-------------|
-| width             | number          |             |
-| height            | number          |             |
-| image             | File or Base64  |             |
-| finishPercent     | ?number         | 70          |
-| brushSize         | ?number         | 20          |
-| fadeOutOnComplete | ?boolean        | true        |
-| onComplete        | ?callback       |             |
-| customBrush       | ?CustomBrush    |             |
-| customCheckZone   | ?CustomCheckZone|             |
+| Prop                    | Type                                          | Default                | Description                                                                                                                            |
+|-------------------------|-----------------------------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `width`                 | `number`                                      | —                      | Canvas width in px                                                                                                                     |
+| `height`                | `number`                                      | —                      | Canvas height in px                                                                                                                    |
+| `cover`                 | `Cover`                                       | `Covers.color('#ccc')` | Cover drawn on the canvas. Use `Covers.color(color)` or `Covers.image(url)`                                                            |
+| `brush`                 | `Brush`                                       | `Brushes.circle(20)`   | Brush shape. Use `Brushes.circle(radius)` or `Brushes.image(url, w, h)`                                                                |
+| `finishPercent`         | `number`                                      | `70`                   | % of pixels erased before `onComplete` fires                                                                                           |
+| `onComplete`            | `() => void`                                  | —                      | Called once when `finishPercent` is reached                                                                                            |
+| `onScratchStart`        | `() => void`                                  | —                      | Called when the user begins scratching                                                                                                 |
+| `onScratch`             | `(percent, position, globalPosition) => void` | —                      | Called on each pixel sample during scratching                                                                                          |
+| `onScratchEnd`          | `(percent: number) => void`                   | —                      | Called when the user stops scratching                                                                                                  |
+| `onReady`               | `() => void`                                  | —                      | Called when the cover is drawn and the card is interactive                                                                             |
+| `onError`               | `(error: Error) => void`                      | —                      | Called if initialization fails                                                                                                         |
+| `lockOnComplete`        | `boolean`                                     | `true`                 | Block scratching after `finishPercent` is reached                                                                                      |
+| `enabled`               | `boolean`                                     | `true`                 | Enable or disable all pointer interaction                                                                                              |
+| `scratchRegion`         | `Region`                                      | —                      | Restrict where the user can scratch                                                                                                    |
+| `validationRegion`      | `Region`                                      | —                      | Restrict which pixels count toward `finishPercent`                                                                                     |
+| `pixelRatio`            | `number`                                      | `devicePixelRatio`     | Canvas buffer scale. Set `1` to disable HiDPI scaling                                                                                  |
+| `scratchInterval`       | `number`                                      | `50`                   | Min ms between `onScratch` calls                                                                                                       |
+| `imageSmoothingQuality` | `ImageSmoothingQuality`                       | `'low'`                | Canvas image smoothing quality. Check https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality  |
+| `ariaLabel`             | `string`                                      | —                      | Accessible label for the canvas element                                                                                                |
+| `canvasProps`           | `CanvasHTMLAttributes`                        | —                      | Extra props forwarded to the `<canvas>` element                                                                                        |
+| `children`              | `ReactNode`                                   | —                      | Content revealed beneath the canvas                                                                                                    |
 
-### CustomBrush
+### Ref
 
-| **name** | **type**       |
-|----------|----------------|
-| width    | number         |
-| height   | number         |
-| image    | File or Base64 |
+Access via `useRef<ScratchCardRef>`.
 
-### CustomCheckZone
-
-| **name** | **type**       |
-|----------|----------------|
-| x        | number         |
-| y        | number         |
-| width    | number         |
-| height   | number         |
-
-
+| Member                | Type                                                            | Description                                                                                                                                     |
+|-----------------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `reset()`             | `() => void`                                                    | Restore to initial covered state. Allows `onComplete` to fire again                                                                             |
+| `revealAll(options?)` | `(options?: { duration?: number; blockSize?: number }) => void` | Erase remaining pixels. Pass `{ duration }` for an animated reveal. `blockSize` controls the N×N pixel block size erased per step (default `1`) |
+| `isReady`             | `boolean`                                                       | `true` once the cover has been drawn and the card is interactive                                                                                |
 
 ## License
 
