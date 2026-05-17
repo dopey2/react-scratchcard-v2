@@ -18,9 +18,9 @@ function EmptyState() {
 export default function App() {
   const { route, navigate } = useRouter();
 
-  useEffect(() => {
-    if (route === '/') navigate('/demo');
-  }, [route, navigate]);
+  if (route === '/' || route === '/demo') {
+    navigate(`/demo/${EXAMPLES[0].slug}`, { replace: true });
+  }
 
   const isDemo = route === '/demo' || route.startsWith('/demo/');
   const isScroll = route === '/scroll-test';
