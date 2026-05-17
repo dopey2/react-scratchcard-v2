@@ -529,6 +529,14 @@ describe('ScratchCard', () => {
       expect(() => ref.current?.revealAll()).not.toThrow();
       expect(onComplete).not.toHaveBeenCalled();
     });
+
+    it('ref.isReady is false before init completes and true after', async () => {
+      const ref = createRef<ScratchCardRef>();
+      setup({ ref });
+      expect(ref.current?.isReady).toBe(false);
+      await waitForInit();
+      expect(ref.current?.isReady).toBe(true);
+    });
   });
 
   describe('reset()', () => {

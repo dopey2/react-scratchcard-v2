@@ -95,6 +95,8 @@ export type ScratchCardRef = {
     reset: () => void;
     /** Erases the remaining pixels. Pass `{ duration }` for an animated reveal. */
     revealAll: (options?: RevealAllOptions) => void;
+    /** `true` once the cover has been drawn and the card is ready to be scratched. */
+    isReady: boolean;
 };
 
 type MouseOrTouchEvent =
@@ -187,9 +189,10 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
         [isReady, onComplete],
     );
 
-    useImperativeHandle(ref, () => ({reset, revealAll}), [
+    useImperativeHandle(ref, () => ({reset, revealAll, isReady}), [
         reset,
         revealAll,
+        isReady,
     ]);
 
     const handlePointerDown = (e: MouseOrTouchEvent) => {
