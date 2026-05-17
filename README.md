@@ -52,7 +52,7 @@ function App() {
 
 ```tsx
 import {useRef} from 'react';
-import ScratchCard, {Covers, Brushes, Shape, type ScratchCardRef} from 'react-scratchcard-v2';
+import ScratchCard, {Covers, Brushes, Regions, type ScratchCardRef} from 'react-scratchcard-v2';
 import coverImg from './cover.jpg';
 import scratchRegionImg from './scratchRegion.png';
 import validationRegionImg from './validationRegion.png';
@@ -65,11 +65,11 @@ const BRUSH = Brushes.circle(20);
 // const BRUSH = Brushes.image(brushImg, 20, 20);
 
 // opaque pixels define the scratchable area
-const SCRATCH_REGION = Shape.image(scratchRegionImg);
+const SCRATCH_REGION = Regions.image(scratchRegionImg);
 
 // opaque pixels define the area that counts toward scratch completion
 // if not defined, completion is based on the entire canvas
-const VALIDATION_REGION = Shape.image(validationRegionImg);
+const VALIDATION_REGION = Regions.image(validationRegionImg);
 
 function App() {
     const ref = useRef<ScratchCardRef>(null);
