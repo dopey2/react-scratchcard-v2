@@ -236,11 +236,12 @@ describe('ScratchCard', () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call onComplete after revealAll via further scratching', () => {
+    it('does not call onComplete after revealAll via further scratching', async () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       const { container } = setup({ ref, onComplete });
+      await waitForInit();
       act(() => { ref.current?.revealAll(); });
       scratch(container.querySelector('canvas')!);
       expect(onComplete).toHaveBeenCalledTimes(1);
@@ -301,39 +302,43 @@ describe('ScratchCard', () => {
   });
 
   describe('revealAll()', () => {
-    it('calls onComplete', () => {
+    it('calls onComplete', async () => {
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       setup({ ref, onComplete });
+      await waitForInit();
       act(() => { ref.current?.revealAll(); });
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call onComplete a second time', () => {
+    it('does not call onComplete a second time', async () => {
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       setup({ ref, onComplete });
+      await waitForInit();
       act(() => { ref.current?.revealAll(); });
       act(() => { ref.current?.revealAll(); });
       expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
-    it('allows onComplete to fire again after reset', () => {
+    it('allows onComplete to fire again after reset', async () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       const { container } = setup({ ref, onComplete });
+      await waitForInit();
       act(() => { ref.current?.revealAll(); });
       act(() => { ref.current?.reset(); });
       scratch(container.querySelector('canvas')!);
       expect(onComplete).toHaveBeenCalledTimes(2);
     });
 
-    it('does not call onComplete if already completed via scratch', () => {
+    it('does not call onComplete if already completed via scratch', async () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       const { container } = setup({ ref, onComplete });
+      await waitForInit();
       scratch(container.querySelector('canvas')!);
       act(() => { ref.current?.revealAll(); });
       expect(onComplete).toHaveBeenCalledTimes(1);
@@ -343,28 +348,30 @@ describe('ScratchCard', () => {
       beforeEach(() => { vi.useFakeTimers(); });
       afterEach(() => { vi.useRealTimers(); });
 
-      it('does not call onComplete immediately when duration is given', () => {
+      it('does not call onComplete immediately when duration is given', async () => {
         const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
         mockCtx.getImageData.mockReturnValue({ data: opaqueData });
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         setup({ ref, onComplete });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         expect(onComplete).not.toHaveBeenCalled();
       });
 
-      it('calls onComplete after animation finishes', () => {
+      it('calls onComplete after animation finishes', async () => {
         const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
         mockCtx.getImageData.mockReturnValue({ data: opaqueData });
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         setup({ ref, onComplete });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         act(() => { vi.runAllTimers(); });
         expect(onComplete).toHaveBeenCalledTimes(1);
       });
 
-      it('calls putImageData during animation', () => {
+      it('calls putImageData during animation', async () => {
         const putImageData = vi.fn();
         (HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>).mockReturnValue({
           ...mockCtx,
@@ -374,24 +381,26 @@ describe('ScratchCard', () => {
         mockCtx.getImageData.mockReturnValue({ data: opaqueData });
         const ref = createRef<ScratchCardRef>();
         setup({ ref });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         act(() => { vi.advanceTimersByTime(16); });
         expect(putImageData).toHaveBeenCalled();
         (HTMLCanvasElement.prototype.getContext as ReturnType<typeof vi.fn>).mockReturnValue(mockCtx);
       });
 
-      it('zeroes pixel alpha in imageData by end of duration', () => {
+      it('zeroes pixel alpha in imageData by end of duration', async () => {
         // verify the erase mechanism actually modifies the buffer, not just that onComplete fires
         const pixelData = new Uint8ClampedArray([255, 255, 255, 255]);
         mockCtx.getImageData.mockReturnValue({ data: pixelData });
         const ref = createRef<ScratchCardRef>();
         setup({ ref, width: 1, height: 1 });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         act(() => { vi.runAllTimers(); });
         expect(pixelData[3]).toBe(0);
       });
 
-      it('at DPR=2, uses DPR as entry step not bufferBlockSize — erases pixels before full duration', () => {
+      it('at DPR=2, uses DPR as entry step not bufferBlockSize — erases pixels before full duration', async () => {
         Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
         // CSS 2×1, DPR=2 → buffer 4×2 (8 pixels)
         // blockSize=2 → bufferBlockSize=round(2×2)=4, entryStep=round(2)=2
@@ -401,6 +410,7 @@ describe('ScratchCard', () => {
         mockCtx.getImageData.mockReturnValue({ data: pixelData });
         const ref = createRef<ScratchCardRef>();
         setup({ ref, width: 2, height: 1 });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100, blockSize: 2 }); });
         act(() => { vi.advanceTimersByTime(64); }); // progress=0.64: fix→1 entry, regression→0 entries
         let zeroedAlpha = 0;
@@ -411,23 +421,25 @@ describe('ScratchCard', () => {
         Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
       });
 
-      it('cancels animation and does not call onComplete when reset mid-animation', () => {
+      it('cancels animation and does not call onComplete when reset mid-animation', async () => {
         const opaqueData = new Uint8ClampedArray([255, 255, 255, 255]);
         mockCtx.getImageData.mockReturnValue({ data: opaqueData });
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         setup({ ref, onComplete });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         act(() => { ref.current?.reset(); });
         act(() => { vi.runAllTimers(); });
         expect(onComplete).not.toHaveBeenCalled();
       });
 
-      it('calls onComplete even when all pixels are already transparent', () => {
+      it('calls onComplete even when all pixels are already transparent', async () => {
         mockCtx.getImageData.mockReturnValue({ data: new Uint8ClampedArray([255, 255, 255, 0]) });
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         setup({ ref, onComplete });
+        await waitForInit();
         act(() => { ref.current?.revealAll({ duration: 100 }); });
         act(() => { vi.runAllTimers(); });
         expect(onComplete).toHaveBeenCalledTimes(1);
@@ -479,19 +491,21 @@ describe('ScratchCard', () => {
         expect(onComplete).toHaveBeenCalledTimes(1);
       });
 
-      it('does not call onComplete again when revealAll is called after threshold', () => {
+      it('does not call onComplete again when revealAll is called after threshold', async () => {
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         setup({ ref, lockOnComplete: false, onComplete });
+        await waitForInit();
         scratch(document.querySelector('canvas')!);
         act(() => { ref.current?.revealAll(); });
         expect(onComplete).toHaveBeenCalledTimes(1);
       });
 
-      it('allows onComplete to fire again after reset', () => {
+      it('allows onComplete to fire again after reset', async () => {
         const onComplete = vi.fn();
         const ref = createRef<ScratchCardRef>();
         const { container } = setup({ ref, lockOnComplete: false, onComplete });
+        await waitForInit();
         const canvas = container.querySelector('canvas')!;
         scratch(canvas);
         act(() => { ref.current?.reset(); });
@@ -502,11 +516,12 @@ describe('ScratchCard', () => {
   });
 
   describe('reset()', () => {
-    it('allows onComplete to fire again after reset', () => {
+    it('allows onComplete to fire again after reset', async () => {
       mockCtx.getImageData.mockReturnValue({ data: transparent });
       const onComplete = vi.fn();
       const ref = createRef<ScratchCardRef>();
       const { container } = setup({ ref, onComplete });
+      await waitForInit();
       const canvas = container.querySelector('canvas')!;
       scratch(canvas);
       expect(onComplete).toHaveBeenCalledTimes(1);
@@ -605,9 +620,10 @@ describe('background canvas', () => {
     expect(mockCtx.clip).toHaveBeenCalled();
   });
 
-  it('redraws bg canvas on reset()', () => {
+  it('redraws bg canvas on reset()', async () => {
     const ref = createRef<ScratchCardRef>();
     setup({ ref, cover: Covers.color('#f00'), scratchRegion: { type: 'rect', x: 0, y: 0, width: 100, height: 100 } });
+    await waitForInit();
     const fillRectCallsAfterMount = mockCtx.fillRect.mock.calls.length;
     act(() => { ref.current?.reset(); });
     expect(mockCtx.fillRect.mock.calls.length).toBeGreaterThan(fillRectCallsAfterMount);

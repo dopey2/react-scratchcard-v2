@@ -170,11 +170,13 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
     }, []);
 
     const reset = useCallback(() => {
+        if (!isReady) return;
         controllerRef.current?.reset();
-    }, []);
+    }, [isReady]);
 
     const revealAll = useCallback(
         (options?: RevealAllOptions) => {
+            if (!isReady) return;
             const controller = controllerRef.current;
             if (!controller) return;
             const wasComplete = controller.isComplete;
@@ -182,7 +184,7 @@ const ScratchCardComponent: React.ForwardRefRenderFunction<ScratchCardRef, Props
                 if (!wasComplete) onComplete?.();
             });
         },
-        [onComplete],
+        [isReady, onComplete],
     );
 
     useImperativeHandle(ref, () => ({reset, revealAll}), [
