@@ -100,29 +100,30 @@ function App() {
 
 ## Props
 
-| Prop                    | Type                                          | Default                | Description                                                                                                                            |
-|-------------------------|-----------------------------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `width`                 | `number`                                      | —                      | Canvas width in px                                                                                                                     |
-| `height`                | `number`                                      | —                      | Canvas height in px                                                                                                                    |
-| `cover`                 | `Cover`                                       | `Covers.color('#ccc')` | Cover drawn on the canvas. Use `Covers.color(color)` or `Covers.image(url)`                                                            |
-| `brush`                 | `Brush`                                       | `Brushes.circle(20)`   | Brush shape. Use `Brushes.circle(radius)` or `Brushes.image(url, w, h)`                                                                |
-| `finishPercent`         | `number`                                      | `70`                   | % of pixels erased before `onComplete` fires                                                                                           |
-| `onComplete`            | `() => void`                                  | —                      | Called once when `finishPercent` is reached                                                                                            |
-| `onScratchStart`        | `() => void`                                  | —                      | Called when the user begins scratching                                                                                                 |
-| `onScratch`             | `(percent, position, globalPosition) => void` | —                      | Called on each pixel sample during scratching                                                                                          |
-| `onScratchEnd`          | `(percent: number) => void`                   | —                      | Called when the user stops scratching                                                                                                  |
-| `onReady`               | `() => void`                                  | —                      | Called when the cover is drawn and the card is interactive                                                                             |
-| `onError`               | `(error: Error) => void`                      | —                      | Called if initialization fails                                                                                                         |
-| `lockOnComplete`        | `boolean`                                     | `true`                 | Block scratching after `finishPercent` is reached                                                                                      |
-| `enabled`               | `boolean`                                     | `true`                 | Enable or disable all pointer interaction                                                                                              |
-| `scratchRegion`         | `Region`                                      | —                      | Restrict where the user can scratch                                                                                                    |
-| `validationRegion`      | `Region`                                      | —                      | Restrict which pixels count toward `finishPercent`                                                                                     |
-| `pixelRatio`            | `number`                                      | `devicePixelRatio`     | Canvas buffer scale. Set `1` to disable HiDPI scaling                                                                                  |
-| `scratchInterval`       | `number`                                      | `50`                   | Min ms between `onScratch` calls                                                                                                       |
-| `imageSmoothingQuality` | `ImageSmoothingQuality`                       | `'low'`                | Canvas image smoothing quality. Check https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality  |
-| `ariaLabel`             | `string`                                      | —                      | Accessible label for the canvas element                                                                                                |
-| `canvasProps`           | `CanvasHTMLAttributes`                        | —                      | Extra props forwarded to the `<canvas>` element                                                                                        |
-| `children`              | `ReactNode`                                   | —                      | Content revealed beneath the canvas                                                                                                    |
+| Prop                    | Type                                          | Default                | Description                                                                                                                                                                                                                     |
+|-------------------------|-----------------------------------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `width`                 | `number`                                      | —                      | Canvas width in px                                                                                                                                                                                                              |
+| `height`                | `number`                                      | —                      | Canvas height in px                                                                                                                                                                                                             |
+| `cover`                 | `Cover`                                       | `Covers.color('#ccc')` | Cover drawn on the canvas. Use `Covers.color(color)` or `Covers.image(url)`                                                                                                                                                     |
+| `brush`                 | `Brush`                                       | `Brushes.circle(20)`   | Brush shape. Use `Brushes.circle(radius)` or `Brushes.image(url, w, h)`                                                                                                                                                         |
+| `finishPercent`         | `number`                                      | `70`                   | % of pixels erased before `onComplete` fires                                                                                                                                                                                    |
+| `onComplete`            | `() => void`                                  | —                      | Called once when `finishPercent` is reached                                                                                                                                                                                     |
+| `onScratchStart`        | `() => void`                                  | —                      | Called when the user begins scratching                                                                                                                                                                                          |
+| `onScratch`             | `(percent, position, globalPosition) => void` | —                      | Called on each pixel sample during scratching                                                                                                                                                                                   |
+| `onScratchEnd`          | `(percent: number) => void`                   | —                      | Called when the user stops scratching                                                                                                                                                                                           |
+| `onReady`               | `() => void`                                  | —                      | Called when the cover is drawn and the card is interactive                                                                                                                                                                      |
+| `onError`               | `(error: Error) => void`                      | —                      | Called if initialization fails                                                                                                                                                                                                  |
+| `lockOnComplete`        | `boolean`                                     | `true`                 | Block scratching after `finishPercent` is reached                                                                                                                                                                               |
+| `enabled`               | `boolean`                                     | `true`                 | Enable or disable all pointer interaction                                                                                                                                                                                       |
+| `scratchRegion`         | `Region`                                      | —                      | Restrict where the user can scratch                                                                                                                                                                                             |
+| `validationRegion`      | `Region`                                      | —                      | Restrict which pixels count toward `finishPercent`                                                                                                                                                                              |
+| `coverBackground`       | `boolean`                                     | `false`                | Renders a background canvas showing the cover outside `scratchRegion`. Only useful when applying CSS animations to the main canvas — without it, the outer cover fades with the scratch zone. No effect without `scratchRegion` |
+| `pixelRatio`            | `number`                                      | `devicePixelRatio`     | Canvas buffer scale. Set `1` to disable HiDPI scaling                                                                                                                                                                           |
+| `scratchInterval`       | `number`                                      | `50`                   | Min ms between `onScratch` calls                                                                                                                                                                                                |
+| `imageSmoothingQuality` | `ImageSmoothingQuality`                       | `'low'`                | Canvas image smoothing quality. Check https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality                                                                                           |
+| `ariaLabel`             | `string`                                      | —                      | Accessible label for the canvas element                                                                                                                                                                                         |
+| `canvasProps`           | `CanvasHTMLAttributes`                        | —                      | Extra props forwarded to the `<canvas>` element                                                                                                                                                                                 |
+| `children`              | `ReactNode`                                   | —                      | Content revealed beneath the canvas                                                                                                                                                                                             |
 
 ____
 
@@ -134,15 +135,13 @@ ____
 // Drawn on top of the canvas. Only opaque pixels are scratchable —
 // transparent areas are excluded from the scratch zone automatically.
 type Cover =
-  | { type: 'color'; color: string }
-  | { type: 'image'; image: string }
+    | { type: 'color'; color: string }
+    | { type: 'image'; image: string }
 
 // factory
 Covers.color('#ff0000')
 Covers.image(coverImg)
 ```
-
-
 
 ### Brush
 
@@ -150,8 +149,8 @@ Covers.image(coverImg)
 // Shape used to erase pixels as the user scratches.
 // Only opaque pixels of the brush image contribute to the erase effect.
 type Brush =
-  | { type: 'circle'; radius: number }
-  | { type: 'image'; image: string; width: number; height: number }
+    | { type: 'circle'; radius: number }
+    | { type: 'image'; image: string; width: number; height: number }
 
 // factory
 Brushes.circle(20)
@@ -179,9 +178,9 @@ Brushes.image(brushImg, 20, 20)
 //
 // When using an image, only opaque pixels define the region.
 type Region =
-  | { type: 'rect';   x: number; y: number; width: number; height: number }
-  | { type: 'circle'; x: number; y: number; radius: number }
-  | { type: 'image';  image: string }
+    | { type: 'rect'; x: number; y: number; width: number; height: number }
+    | { type: 'circle'; x: number; y: number; radius: number }
+    | { type: 'image'; image: string }
 
 // factory
 Regions.rect(0, 0, 200, 100)
@@ -201,8 +200,8 @@ ref.current.isReady                                          // true once the co
 ref.current.reset()                                          // restore to initial state, allows onComplete to fire again
 
 ref.current.revealAll()                                      // instant full reveal
-ref.current.revealAll({ duration: 500 })                     // animated reveal over 500ms
-ref.current.revealAll({ duration: 500, blockSize: 4 })       // animated, erases in 4×4 pixel blocks
+ref.current.revealAll({duration: 500})                     // animated reveal over 500ms
+ref.current.revealAll({duration: 500, blockSize: 4})       // animated, erases in 4×4 pixel blocks
 ```
 
 ## License
