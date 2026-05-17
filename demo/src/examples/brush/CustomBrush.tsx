@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import ScratchCard, {Brushes, Covers, type ScratchCardRef} from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
-import { brushImageBase64 } from "./customBrushImage";
+import customBrushImg from '../../assets/customBrush.png';
 
-const imageBrush = Brushes.image(brushImageBase64, 30, 30)
+const imageBrush = Brushes.image(customBrushImg, 30, 30)
 const coloredCover = Covers.color('#475569')
 
 export default function CustomBrush() {
@@ -13,7 +13,7 @@ export default function CustomBrush() {
   return (
     <Example
       title="Custom brush"
-      description="Replaces the circle brush with an image. CUSTOM_BRUSH_PRESET is the built-in star shape."
+      description="Replaces the circle brush with a custom image."
       complete={complete}
       controls={
         <>

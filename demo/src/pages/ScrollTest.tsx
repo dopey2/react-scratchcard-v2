@@ -1,40 +1,26 @@
 import ScratchCard, { Covers } from 'react-scratchcard-v2';
-import img from '../img.jpg';
+import img from '../assets/cover.jpg';
 
-const Block = ({ label }: { label: string }) => (
-  <div style={{
-    height: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#f0f0f0',
-    fontSize: '1.5rem',
-    color: '#999',
-    borderBottom: '1px solid #ddd',
-  }}>
-    {label}
-  </div>
-);
+function Block({ label }: { label: string }) {
+  return (
+    <div className="h-screen flex items-center justify-center bg-slate-100 text-xl text-slate-400 border-b border-slate-200">
+      {label}
+    </div>
+  );
+}
 
 export default function ScrollTest() {
   return (
     <div>
       <Block label="↓ Scroll down to reach the scratch card" />
 
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        padding: '2rem',
-        background: '#fff',
-      }}>
-        <p style={{ color: '#555', textAlign: 'center', maxWidth: 340 }}>
-          <strong>Test:</strong> scratch the card on mobile.<br />
-          The page must <strong>not scroll</strong> while your finger is on the canvas.
-          Scrolling means <code>e.preventDefault()</code> on <code>touchmove</code> is broken.
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-8">
+        <p className="text-slate-500 text-center max-w-sm text-sm leading-relaxed">
+          <strong className="text-slate-700 font-semibold">Test:</strong> scratch the card on
+          mobile. The page must{' '}
+          <strong className="text-slate-700 font-semibold">not scroll</strong> while your finger
+          is on the canvas. Scrolling means <code>e.preventDefault()</code> on{' '}
+          <code>touchmove</code> is broken.
         </p>
         <ScratchCard
           width={320}
@@ -43,8 +29,8 @@ export default function ScrollTest() {
           finishPercent={80}
           onComplete={() => console.log('complete')}
         >
-          <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ color: '#555', fontSize: '0.9rem' }}>Your content here</p>
+          <div className="flex w-full h-full items-center justify-center bg-white">
+            <p className="text-slate-400 text-sm">Your content here</p>
           </div>
         </ScratchCard>
       </div>

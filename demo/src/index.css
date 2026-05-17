@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    margin: 0;
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button {
+    padding: 0.3rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    font-family: inherit;
+  }
+
+  button:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
+  input[type='range'] {
+    accent-color: #64748b;
+  }
+
+  code {
+    font-size: 0.85em;
+    background: #e2e8f0;
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: #334155;
+  }
+}

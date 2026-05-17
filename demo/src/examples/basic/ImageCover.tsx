@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
-import img from '../../img.jpg';
+import img from '../../assets/cover.jpg';
 
 export default function ImageCover() {
   const ref = useRef<ScratchCardRef>(null);

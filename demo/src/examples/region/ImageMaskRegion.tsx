@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import ScratchCard, { Brushes, Covers, Regions, type ScratchCardRef } from 'react-scratchcard-v2';
 import { Example, Result } from '../shared';
-import coverImg from './scratchCover.png';
-import maskImg from './scratchMask.png';
+import coverImg from '../../assets/scratchCover.png';
+import maskImg from '../../assets/scratchMask.png';
 
 export default function ImageMaskRegion() {
   const ref = useRef<ScratchCardRef>(null);

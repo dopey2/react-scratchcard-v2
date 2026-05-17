@@ -1,30 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import ScratchCard, { Covers, type ScratchCardRef } from 'react-scratchcard-v2';
-import img from '../img.jpg';
+import img from '../assets/cover.jpg';
 
 type Release = 'inside' | 'outside' | null;
 
-const rowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '0.4rem 0',
-  borderBottom: '1px solid #2a2a2a',
-};
-
-const labelStyle: React.CSSProperties = {
-  width: 140,
-  color: '#888',
-  fontFamily: 'monospace',
-  fontSize: '0.9rem',
-};
-
-const valueStyle = (color: string): React.CSSProperties => ({
-  fontFamily: 'monospace',
-  fontSize: '0.95rem',
-  fontWeight: 700,
-  color,
-});
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4 py-2 border-b border-slate-200">
+      <span className="w-36 font-mono text-sm text-slate-500">{label}</span>
+      {children}
+    </div>
+  );
+}
 
 export default function StateDemo() {
   const cardRef = useRef<ScratchCardRef>(null);
@@ -45,9 +32,9 @@ export default function StateDemo() {
     return () => window.removeEventListener('mouseup', handleWindowMouseUp);
   }, []);
 
-  const handleScratchEnd = (percent: number) => {
+  const handleScratchEnd = (p: number) => {
     setIsScratching(false);
-    setPercent(percent);
+    setPercent(p);
     setTimeout(() => {
       setLastRelease(releasedInsideRef.current ? 'inside' : 'outside');
       releasedInsideRef.current = false;
@@ -55,48 +42,56 @@ export default function StateDemo() {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2 style={{ marginBottom: '1.5rem' }}>State Demo</h2>
-
-      <div style={{ marginBottom: '1.5rem', maxWidth: 360, borderTop: '1px solid #2a2a2a' }}>
-        <div style={rowStyle}>
-          <span style={labelStyle}>isScratching</span>
-          <span style={valueStyle(isScratching ? '#4c4' : '#c44')}>
+    <div className="p-8">
+      <div className="mb-6 max-w-sm border-t border-slate-200">
+        <Row label="isScratching">
+          <span className={`font-mono font-bold text-sm ${isScratching ? 'text-emerald-600' : 'text-red-400'}`}>
             {String(isScratching)}
           </span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>percent</span>
-          <span style={valueStyle('#eee')}>{percent}%</span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>isComplete</span>
-          <span style={valueStyle(isComplete ? '#4c4' : '#c44')}>
+        </Row>
+        <Row label="percent">
+          <span className="font-mono font-bold text-sm text-slate-900">{percent}%</span>
+        </Row>
+        <Row label="isComplete">
+          <span className={`font-mono font-bold text-sm ${isComplete ? 'text-emerald-600' : 'text-red-400'}`}>
             {String(isComplete)}
           </span>
-        </div>
-        <div style={rowStyle}>
-          <span style={labelStyle}>lastRelease</span>
-          <span style={valueStyle(lastRelease === 'outside' ? '#e94' : lastRelease === 'inside' ? '#4c4' : '#555')}>
+        </Row>
+        <Row label="lastRelease">
+          <span
+            className={`font-mono font-bold text-sm ${
+              lastRelease === 'outside'
+                ? 'text-amber-500'
+                : lastRelease === 'inside'
+                  ? 'text-emerald-600'
+                  : 'text-slate-300'
+            }`}
+          >
             {lastRelease ?? '—'}
           </span>
-        </div>
+        </Row>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => {
-          cardRef.current?.reset();
-          setPercent(0);
-          setIsComplete(false);
-          setLastRelease(null);
-        }}>Reset</button>
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => {
+            cardRef.current?.reset();
+            setPercent(0);
+            setIsComplete(false);
+            setLastRelease(null);
+          }}
+        >
+          Reset
+        </button>
         <button onClick={() => cardRef.current?.revealAll({ blockSize: 4 })}>Reveal All</button>
-        <button onClick={() => cardRef.current?.revealAll({ duration: 1500, blockSize: 4 })}>Reveal (animated)</button>
+        <button onClick={() => cardRef.current?.revealAll({ duration: 1500, blockSize: 4 })}>
+          Reveal (animated)
+        </button>
       </div>
 
       <div
         ref={wrapperRef}
-        style={{ display: 'inline-block' }}
+        className="inline-block"
         onMouseDown={() => setIsScratching(true)}
         onTouchStart={() => setIsScratching(true)}
       >
@@ -110,8 +105,8 @@ export default function StateDemo() {
           onScratchEnd={handleScratchEnd}
           onComplete={() => setIsComplete(true)}
         >
-          <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ color: '#555', fontSize: '0.9rem' }}>Your content here</p>
+          <div className="flex w-full h-full items-center justify-center bg-white">
+            <p className="text-slate-400 text-sm">Your content here</p>
           </div>
         </ScratchCard>
       </div>

@@ -1,5 +1,3 @@
-// ── Shared layout primitives ──────────────────────────────────────────────────
-
 export type ExampleProps = {
   title: string;
   description: string;
@@ -10,16 +8,18 @@ export type ExampleProps = {
 
 export function Example({ title, description, complete, controls, children }: ExampleProps) {
   return (
-    <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', padding: '2rem 0' }}>
+    <div className="flex gap-10 items-start py-8">
       {children}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <h3 style={{ fontSize: '1rem', margin: 0 }}>{title}</h3>
-        <p style={{ color: '#888', fontSize: '0.85rem', margin: 0 }}>{description}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: 120, marginTop: '0.5rem' }}>
-          {controls}
-        </div>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-base font-semibold text-slate-900 m-0">{title}</h3>
+        <p className="text-sm text-slate-500 m-0 max-w-xs leading-relaxed">{description}</p>
+        {controls && (
+          <div className="flex flex-col gap-2 mt-1 max-w-[130px]">
+            {controls}
+          </div>
+        )}
         {complete !== undefined && (
-          <div style={{ fontSize: '0.75rem', color: complete ? '#4ade80' : '#555', marginTop: '0.25rem' }}>
+          <div className={`text-xs mt-1 ${complete ? 'text-emerald-600' : 'text-slate-300'}`}>
             {complete ? '● complete' : '○ pending'}
           </div>
         )}
@@ -30,32 +30,9 @@ export function Example({ title, description, complete, controls, children }: Ex
 
 export function Result() {
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#555', fontSize: '0.9rem', margin: 0 }}>Your content here</p>
+    <div className="flex w-full h-full items-center justify-center bg-white">
+      <p className="text-slate-400 text-sm m-0">Your content here</p>
     </div>
   );
 }
 
-export function Divider() {
-  return <hr style={{ border: 'none', borderTop: '1px solid #2a2a2a', margin: 0 }} />;
-}
-
-export function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section style={{ marginBottom: '2rem' }}>
-      <h2 style={{
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: '#555',
-        margin: 0,
-        padding: '1.5rem 0 0',
-        borderTop: '2px solid #333',
-      }}>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
