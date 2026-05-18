@@ -16,9 +16,9 @@ export default function Sidebar() {
   return (
     <aside className="w-64 shrink-0 border-r border-slate-200 overflow-y-auto bg-slate-100">
       <nav className="p-3 pt-4">
-        {EXAMPLE_GROUPS.map((group) => (
+        {EXAMPLE_GROUPS.map((group, i) => (
           <div key={group} className="mb-5">
-            <p className="px-2 mb-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
+            <p className={`px-2 mb-1 text-xs font-semibold uppercase tracking-widest text-slate-600 pt-2 border-slate-300 ${i !== 0 ? 'border-t' : ''}`}>
               {group}
             </p>
             {EXAMPLES.filter((e) => e.group === group).map((example) => (
