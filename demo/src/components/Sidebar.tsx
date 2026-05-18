@@ -14,7 +14,7 @@ export default function Sidebar() {
   const activeSlug = route.startsWith('/demo/') ? route.slice(6) : null;
 
   return (
-    <aside className="w-52 shrink-0 border-r border-slate-200 overflow-y-auto bg-slate-100">
+    <aside className="w-64 shrink-0 border-r border-slate-200 overflow-y-auto bg-slate-100">
       <nav className="p-3 pt-4">
         {EXAMPLE_GROUPS.map((group) => (
           <div key={group} className="mb-5">

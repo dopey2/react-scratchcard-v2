@@ -16,7 +16,7 @@ export default function TabBar() {
 
   return (
     <header className="shrink-0 flex items-center gap-1 px-5 h-12 bg-slate-800 border-b border-slate-700">
-      <span className="mr-5 text-sm font-semibold text-white tracking-tight">
+      <span className="w-64 mr-5 text-sm font-semibold text-white tracking-tight">
         react-scratchcard-v2
       </span>
       {TABS.map(({ label, path }) => (
